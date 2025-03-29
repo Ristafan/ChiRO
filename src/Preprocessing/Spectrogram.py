@@ -2,7 +2,7 @@ from src.Logging.Logger import Logger
 import torch
 import torchaudio
 import matplotlib.pyplot as plt
-from src.Preprocessing.DataLoader import DataLoader
+from src.Preprocessing.AudioLoader import AudioLoader
 
 
 class Spectrogram:
@@ -19,8 +19,8 @@ class Spectrogram:
         self.spectrogram = transform(self.data)
         Logger().log_debug('Mel scale filterbank applied')
 
-    def save_spectrogram(self):
-        torch.save(self.spectrogram, 'spectrogram.pt')
+    def save_spectrogram(self, name):
+        torch.save(self.spectrogram, f'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms/spectrogram_{name}.pt')
         Logger().log_debug('Spectrogram saved')
 
     def plot_spectrogram(self):
@@ -34,13 +34,15 @@ class Spectrogram:
 
 
 if __name__ == '__main__':
-    dt = DataLoader('C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData')
+    dt = AudioLoader('C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData')
     dt.load_folder()
+    print(dt.get_data().shape)
     spectrogram = Spectrogram(dt.get_data()[0])
     spectrogram.melscale_filterbank()
+    #spectrogram.save_spectrogram("1")
     spectrogram.plot_spectrogram()
 
     spectrogram = Spectrogram(dt.get_data()[1])
     spectrogram.melscale_filterbank()
-    spectrogram.plot_spectrogram()
-
+    #spectrogram.save_spectrogram("2")
+    #spectrogram.plot_spectrogram()
