@@ -3,30 +3,31 @@ import torch
 import torchaudio
 import os
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
 
 
 class AudioLoader:
     def __init__(self, data_path):
         self.data_path = data_path
-        self.file_path = None
         self.waveform = None
         self.sample_rate = None
-        self.data = torch.tensor([])
+        self.data = []
 
     def get_data(self):
         return self.data
 
-    def load_wav_file(self):
-        self.waveform, self.sample_rate = torchaudio.load(self.file_path)
+    def load_wav_file(self, file_path):
+        """Loads a single wav file."""
+        return torchaudio.load(file_path)
 
     def load_folder(self):
-        self.data = []
+        """Load all WAV files from the folder and store them in the list."""
+        file_paths = [entry.path for entry in os.scandir(self.data_path) if entry.name.endswith('.WAV')]
 
-        for file in tqdm(self.get_file_names(), desc='Loading Audio Files'):
-            self.file_path = os.path.join(self.data_path, file)
-            self.load_wav_file()
-            Logger().log_debug(f'Loaded file {file}')
-            self.data.append(self.waveform)
+        with ThreadPoolExecutor() as executor:
+            for waveform, sample_rate in tqdm(executor.map(self.load_wav_file, file_paths), total=len(file_paths), desc='Loading Audio Files'):
+                Logger().log_debug(f'Loaded file {os.path.basename(file_paths[len(self.data)])}')
+                self.data.append(waveform)
 
         Logger().log_debug(f'Data loaded from folder {self.data_path}')
 

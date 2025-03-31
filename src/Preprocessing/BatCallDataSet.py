@@ -22,21 +22,26 @@ class BatCallDataset(Dataset):
         excel_filename = self.file_names[idx]
         filename = f"spectrogram_{self.file_names[idx]}.WAV.pt"
         spectrogram_path = os.path.join(self.spectrogram_dir, filename)
-        spectrogram = torch.load(spectrogram_path)  # Load precomputed spectrogram
-        spectrogram = spectrogram.unsqueeze(0)  # Add channel dimension for CNN
+        spectrogram = torch.load(spectrogram_path)
+
+        if spectrogram.dim() == 3:  # Fix unwanted extra batch dimensions
+            spectrogram = spectrogram.squeeze(0)
+
+        spectrogram = spectrogram.unsqueeze(0)  # Ensure correct shape: [1, height, width]
 
         label = torch.tensor(self.labels[excel_filename], dtype=torch.long)
         return spectrogram, label
 
 
+
 if __name__ == '__main__':
     # Example usage
-    spectrogram_dir = 'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms'
-    labels_loader = LabelsLoader('C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels.xlsx')  # Assume LabelsLoader is implemented elsewhere
-    labels_loader.load_labels_excel()
+    spec_dir = 'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms'
+    lab_loader = LabelsLoader('C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels.xlsx')
+    lab_loader.load_labels_excel()
 
-    dataset = BatCallDataset(spectrogram_dir, labels_loader)
+    dataset = BatCallDataset(spec_dir, lab_loader)
     print(f"Dataset size: {len(dataset)}")
-    spectrogram, label = dataset[0]
-    print(f"Spectrogram shape: {spectrogram.shape}")
-    print(f"Label: {label}")
+    spec, lab = dataset[0]
+    print(f"Spectrogram shape: {spec.shape}")
+    print(f"Label: {lab}")

@@ -17,6 +17,7 @@ class SpectrogramProcessor:
         self.waveform = waveform
         self.sample_rate = sample_rate
         self.spectrogram = None
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def apply_highpass_filter(self, cutoff_freq=16000):
         """
@@ -29,9 +30,10 @@ class SpectrogramProcessor:
         """
         Computes a high-resolution spectrogram optimized for bat echolocation calls.
         """
-        transform = T.Spectrogram(n_fft=n_fft, win_length=win_length, hop_length=hop_length, power=2.0)
+        transform = T.Spectrogram(n_fft=n_fft, win_length=win_length, hop_length=hop_length, power=2.0).to(self.device)
+        self.waveform = self.waveform.to(self.device)
         self.spectrogram = transform(self.waveform)
-        return self.spectrogram
+        return self.spectrogram.to('cpu')
 
     def compute_mel_spectrogram(self, n_mels=256, n_fft=4096, hop_length=256):
         """
@@ -45,9 +47,11 @@ class SpectrogramProcessor:
             n_mels=n_mels,
             f_min=1000,  # Ignore low frequencies (<1 kHz) as bat calls are usually higher
             f_max=self.sample_rate // 2  # Use Nyquist frequency (48 kHz for 96 kHz recordings)
-        )
+        ).to(self.device)
+
+        self.waveform = self.waveform.to(self.device)
         self.spectrogram = transform(self.waveform)
-        return self.spectrogram
+        return self.spectrogram.to('cpu')
 
     def denoise_spectrogram(self):
         """
@@ -98,7 +102,7 @@ if __name__ == '__main__':
     waveforms = dt.get_data()
     names = dt.get_file_names()
 
-    for i in tqdm(range(len(waveforms))):
+    for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
         sp = SpectrogramProcessor(waveforms[i])
         sp.apply_highpass_filter()
         # sp.compute_spectrogram()
