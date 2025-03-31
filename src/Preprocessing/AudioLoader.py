@@ -2,6 +2,7 @@ from src.Logging.Logger import Logger
 import torch
 import torchaudio
 import os
+from tqdm import tqdm
 
 
 class AudioLoader:
@@ -19,11 +20,13 @@ class AudioLoader:
         self.waveform, self.sample_rate = torchaudio.load(self.file_path)
 
     def load_folder(self):
-        for file in self.get_file_names():
+        self.data = []
+
+        for file in tqdm(self.get_file_names(), desc='Loading Audio Files'):
             self.file_path = os.path.join(self.data_path, file)
             self.load_wav_file()
             Logger().log_debug(f'Loaded file {file}')
-            self.data = torch.cat((self.data, self.waveform), 0)
+            self.data.append(self.waveform)
 
         Logger().log_debug(f'Data loaded from folder {self.data_path}')
 
@@ -34,6 +37,5 @@ class AudioLoader:
 if __name__ == '__main__':
     data_loader = AudioLoader('C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData')
     data_loader.load_folder()
-    print(data_loader.data.shape)
     print(data_loader.get_file_names())
 
