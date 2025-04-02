@@ -1,5 +1,6 @@
 from torch import nn, optim
 from tqdm import tqdm
+import os
 from torch.utils.data import DataLoader
 
 from src.Logging.Logger import Logger
@@ -69,31 +70,45 @@ def collate_fn(batch):
 
 
 if __name__ == '__main__':
+    # Set up paths
+    spectrogram_already_computed = False
+    audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Training"
+    spectrograms_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms"
+    labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels.xlsx"
+    model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha"
+    model_name = "alphaV1.pth"
 
-    # Load Audio Files
-    audio_loader = AudioLoader("C:/Users/MartinFaehnrich/Documents/ChiRO/data/Training")
-    audio_loader.load_folder()
-    waveforms = audio_loader.get_data()
-    names = audio_loader.get_file_names()
+    if not spectrogram_already_computed:
+        # Load Audio Files
+        audio_loader = AudioLoader(audioloader_path)
+        audio_loader.load_folder()
+        waveforms = audio_loader.get_data()
+        names = audio_loader.get_file_names()
 
-    # Create Spectrograms
-    for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
-        sp = SpectrogramProcessor(waveforms[i])
-        sp.apply_highpass_filter()
-        sp.compute_spectrogram()
-        sp.compute_mel_spectrogram()
-        sp.denoise_spectrogram()
-        sp.save_spectrogram(f'{names[i]}', 'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms/')
+        # Create Spectrograms
+        for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
+            sp = SpectrogramProcessor(waveforms[i])
+            sp.apply_highpass_filter()
+            sp.compute_spectrogram()
+            sp.compute_mel_spectrogram()
+            sp.denoise_spectrogram()
+            sp.save_spectrogram(f'{names[i]}', spectrograms_path + '/')
 
     # Load labels from Excel
-    labels_loader = LabelsLoader("C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels.xlsx", filename_column="Filename", text_column="Label")
+    labels_loader = LabelsLoader(labels_path, filename_column="Filename", text_column="Label")
     labels_loader.load_labels_excel()
 
     # Create Dataset & DataLoader
-    dataset = BatCallDataset("C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms", labels_loader)
-    train_loader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
+    dataset = BatCallDataset(spectrograms_path, labels_loader)
+    train_loader = tqdm(DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn), desc="Loading Data")
 
     # Initialize Model & Train
     model = AlphaV1()
     train_model(model, train_loader, num_epochs=10)
+
+    # Ensure the directory exists
+    os.makedirs(model_path, exist_ok=True)
+
+    # Save the model
+    torch.save(model.state_dict(), os.path.join(model_path, model_name))
 
