@@ -1,6 +1,7 @@
 from torch import nn, optim
 from tqdm import tqdm
 import os
+import wandb
 from torch.utils.data import DataLoader
 
 from src.Logging.Logger import Logger
@@ -77,6 +78,24 @@ if __name__ == '__main__':
     labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels.xlsx"
     model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha"
     model_name = "alphaV1.pth"
+    batch_size = 4
+    num_epochs = 10
+    learning_rate = 0.001  # TODO
+    dataset_name = "BatCallDataset"
+
+    # Start wandb run
+    run = wandb.init(
+        project="ChiRO",
+        entity="MartinF",
+        job_type="training",
+        config={
+            "learning_rate": learning_rate,
+            "architecture": model_name,
+            "dataset": dataset_name,
+            "num_epochs": num_epochs,
+            "batch_size": batch_size
+        },
+    )
 
     if not spectrogram_already_computed:
         # Load Audio Files
@@ -100,11 +119,11 @@ if __name__ == '__main__':
 
     # Create Dataset & DataLoader
     dataset = BatCallDataset(spectrograms_path, labels_loader)
-    train_loader = tqdm(DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn), desc="Loading Data")
+    train_loader = tqdm(DataLoader(dataset, batch_size, shuffle=True, collate_fn=collate_fn), desc="Loading Data")
 
     # Initialize Model & Train
     model = AlphaV1()
-    train_model(model, train_loader, num_epochs=10)
+    train_model(model, train_loader, num_epochs)
 
     # Ensure the directory exists
     os.makedirs(model_path, exist_ok=True)

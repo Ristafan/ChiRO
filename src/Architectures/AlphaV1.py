@@ -12,10 +12,12 @@ class AlphaV1(nn.Module):
         self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
 
-        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)  # Global pooling to adapt to varying input size
+        # Global average pooling layer to reduce to (batch_size, 64, 1, 1)
+        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
 
-        self.fc1 = nn.Linear(64, 128)  # Adjusted for the output size from global pooling
-        self.fc2 = nn.Linear(128, 2)   # Output layer for binary classification
+        # Fully connected layers adjusted for the output size from global pooling
+        self.fc1 = nn.Linear(64, 128)
+        self.fc2 = nn.Linear(128, 2)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
