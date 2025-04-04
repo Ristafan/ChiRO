@@ -16,13 +16,14 @@ class AudioLoader:
     def get_data(self):
         return self.data
 
-    def load_wav_file(self, file_path):
+    def load_wav_file(self, filename):
         """Loads a single wav file."""
-        return torchaudio.load(file_path)
+        filepath = os.path.join(self.data_path, filename)
+        return torchaudio.load(filepath)
 
     def load_folder(self):
         """Load all WAV files from the folder and store them in the list."""
-        file_paths = [entry.path for entry in os.scandir(self.data_path) if entry.name.endswith('.WAV')]
+        file_paths = [entry.path for entry in os.scandir(self.data_path) if entry.name.lower().endswith('.wav')]
 
         with ThreadPoolExecutor() as executor:
             for waveform, sample_rate in tqdm(executor.map(self.load_wav_file, file_paths), total=len(file_paths), desc='Loading Audio Files'):
@@ -32,7 +33,7 @@ class AudioLoader:
         Logger().log_debug(f'Data loaded from folder {self.data_path}')
 
     def get_file_names(self):
-        return [filename for filename in os.listdir(self.data_path) if filename.endswith('.WAV')]
+        return [filename for filename in os.listdir(self.data_path) if filename.lower().endswith('.wav')]
 
 
 if __name__ == '__main__':

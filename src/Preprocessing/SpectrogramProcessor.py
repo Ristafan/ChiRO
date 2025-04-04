@@ -83,6 +83,7 @@ class SpectrogramProcessor:
             raise ValueError("Spectrogram has not been computed yet.")
 
         # Convert to decibels if using log scale
+        self.spectrogram.to('cpu')
         spec_to_plot = self.spectrogram.numpy()
         if log_scale:
             spec_to_plot = 10 * torch.log10(self.spectrogram + 1e-10).numpy()  # Avoid log(0) errors
@@ -109,4 +110,4 @@ if __name__ == '__main__':
         sp.compute_mel_spectrogram()
         sp.denoise_spectrogram()
         # sp.save_spectrogram(f'{names[i]}', 'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms/')
-        sp.plot_spectrogram(False)
+        # sp.plot_spectrogram(False)
