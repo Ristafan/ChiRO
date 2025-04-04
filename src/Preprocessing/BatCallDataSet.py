@@ -32,6 +32,11 @@ class BatCallDataset(Dataset):
         label = torch.tensor(self.labels[excel_filename], dtype=torch.long)
         return spectrogram, label
 
+    def get_labels(self):
+        labels = []
+        for filename in self.file_names:
+            labels.append(self.labels[filename])
+        return labels
 
 
 if __name__ == '__main__':

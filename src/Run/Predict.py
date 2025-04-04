@@ -72,8 +72,8 @@ if __name__ == "__main__":
     model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha/alphaV1.pth"
     data_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData"
     predictor = Predictor(model, model_path, data_path)
-    #prediction = predictor.predict_audio_file("20220705_220800T_555b4a69c5e3062b73b1fb2448b5addb.wav")
-    #print(f"Predicted class: {prediction}")
+    prediction = predictor.predict_audio_file("20220705_220800T_555b4a69c5e3062b73b1fb2448b5addb.wav")
+    print(f"Predicted class: {prediction}")
 
     predictions = predictor.predict_folder()
     print(f"Predicted classes: {predictions}")
