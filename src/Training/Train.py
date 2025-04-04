@@ -3,6 +3,8 @@ from tqdm import tqdm
 import os
 import wandb
 from torch.utils.data import DataLoader
+import torch
+
 
 from src.Logging.Logger import Logger
 from src.Preprocessing.AudioLoader import AudioLoader
@@ -13,9 +15,6 @@ from src.Architectures.AlphaV1 import AlphaV1
 from src.Preprocessing.BatCallDataSet import BatCallDataset
 
 
-import torch
-
-
 def train_model(model, train_loader, num_epochs=10):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -23,39 +22,33 @@ def train_model(model, train_loader, num_epochs=10):
     criterion = nn.CrossEntropyLoss()  # For binary classification
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
+    wandb.watch(model, criterion, log="all", log_freq=10)  # Track gradients & parameters
+
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
 
         for spectrograms, labels in train_loader:
-            # Move labels to the device (this part is fine)
             labels = labels.to(device)
-
-            # Move each spectrogram in the batch to the device
             spectrograms = [spec.to(device) for spec in spectrograms]
 
-            # Process the spectrograms (this assumes your model can handle a list of tensors)
             optimizer.zero_grad()
-
-            # Pass each spectrogram to the model one by one
-            outputs = []
-            for spec in spectrograms:
-                output = model(spec.unsqueeze(0))  # Add batch dimension
-                outputs.append(output)
-
-            # Concatenate outputs and labels
+            outputs = [model(spec.unsqueeze(0)) for spec in spectrograms]
             outputs = torch.cat(outputs, dim=0)
 
-            # Compute loss
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
 
             running_loss += loss.item()
 
-        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader)}")
+        epoch_loss = running_loss / len(train_loader)
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss}")
+
+        wandb.log({"epoch": epoch + 1, "loss": epoch_loss})  # Log epoch loss
 
     print("Training complete!")
+
 
 
 def collate_fn(batch):
@@ -72,30 +65,38 @@ def collate_fn(batch):
 
 if __name__ == '__main__':
     # Set up paths
-    spectrogram_already_computed = False
-    audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Training"
-    spectrograms_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms"
-    labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels.xlsx"
-    model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha"
-    model_name = "alphaV1.pth"
-    batch_size = 4
-    num_epochs = 10
-    learning_rate = 0.001  # TODO
-    dataset_name = "BatCallDataset"
+    spectrogram_already_computed = True
+    example_data = False
 
-    # Start wandb run
+    audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData"
+    spectrograms_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleSpectrograms"
+    labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels_exampledata.xlsx"
+
+    model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha"
+
+    if not example_data:
+        audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Training"
+        spectrograms_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms"
+        labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels.xlsx"
+
+    wandb.login(key="32b08e4c860b935b2cd9c30774889b952ffefe0d")
+
     run = wandb.init(
         project="ChiRO",
-        entity="MartinF",
+        entity="martin-faehnrich-university-of-z-rich",
         job_type="training",
         config={
-            "learning_rate": learning_rate,
-            "architecture": model_name,
-            "dataset": dataset_name,
-            "num_epochs": num_epochs,
-            "batch_size": batch_size
+            "notes": "TwoBatSpecies_AllEnv",
+            "learning_rate": 0.001,  # TODO
+            "dataset": "BatCallsDataSet",
+            "num_epochs": 10,
+            "batch_size": 4,
+            "model": AlphaV1,
+            "model_name": "alphaV1_01.pth",
         },
     )
+
+    config = wandb.config
 
     if not spectrogram_already_computed:
         # Load Audio Files
@@ -119,15 +120,15 @@ if __name__ == '__main__':
 
     # Create Dataset & DataLoader
     dataset = BatCallDataset(spectrograms_path, labels_loader)
-    train_loader = tqdm(DataLoader(dataset, batch_size, shuffle=True, collate_fn=collate_fn), desc="Loading Data")
+    train_loader = tqdm(DataLoader(dataset, config.batch_size, shuffle=True, collate_fn=collate_fn), desc="Loading Data")
 
     # Initialize Model & Train
     model = AlphaV1()
-    train_model(model, train_loader, num_epochs)
+    train_model(model, train_loader, config.num_epochs)
 
     # Ensure the directory exists
     os.makedirs(model_path, exist_ok=True)
 
     # Save the model
-    torch.save(model.state_dict(), os.path.join(model_path, model_name))
+    torch.save(model.state_dict(), os.path.join(model_path, config.model_name))
 
