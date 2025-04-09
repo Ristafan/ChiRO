@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 
 class SpectrogramProcessor:
-    def __init__(self, waveform, sample_rate=96000):
+    def __init__(self, waveform, sample_rate=192000):
         """
         Initialize with a waveform tensor.
         :param waveform: Tensor of shape (channels, time)
@@ -26,7 +26,7 @@ class SpectrogramProcessor:
         """
         self.waveform = F.highpass_biquad(self.waveform, sample_rate=self.sample_rate, cutoff_freq=cutoff_freq)
 
-    def compute_spectrogram(self, n_fft=4096, hop_length=256, win_length=4096):
+    def compute_spectrogram(self, n_fft=4096, hop_length=None, win_length=2048):
         """
         Computes a high-resolution spectrogram optimized for bat echolocation calls.
         """
@@ -83,17 +83,34 @@ class SpectrogramProcessor:
             raise ValueError("Spectrogram has not been computed yet.")
 
         # Convert to decibels if using log scale
-        self.spectrogram.to('cpu')
-        spec_to_plot = self.spectrogram.numpy()
+        spec_cpu = self.spectrogram.to('cpu').squeeze()
+        spec_to_plot = spec_cpu.numpy()
+
         if log_scale:
-            spec_to_plot = 10 * torch.log10(self.spectrogram + 1e-10).numpy()  # Avoid log(0) errors
+            spec_to_plot = 10 * torch.log10(spec_cpu + 1e-10).numpy()  # Avoid log(0) errors
 
         plt.figure(figsize=(10, 5))
         plt.imshow(spec_to_plot, aspect='auto', origin='lower', cmap='magma', extent=[0, spec_to_plot.shape[1], 16, 48])
         plt.colorbar(label="Power (dB)" if log_scale else "Amplitude")
         plt.xlabel("Time Frames")
         plt.ylabel("Frequency (kHz)")
-        plt.title("Mel Spectrogram (Log Scale)" if log_scale else "Mel Spectrogram")
+        plt.title("Spectrogram (Log Scale)" if log_scale else "Spectrogram")
+        plt.show()
+
+    def plot_new(self):
+        spectrogram_db = T.AmplitudeToDB(stype="power", top_db=80.0)(self.spectrogram) # Apply dynamic range
+
+        spectrogram_db = spectrogram_db.squeeze(0)  # Remove the channel dimension
+        spectrogram_db = spectrogram_db.cpu()  # Move to CPU for plotting
+
+        plt.figure(figsize=(16, 10))
+        plt.imshow(spectrogram_db.numpy(), aspect='auto', origin='lower',
+                   extent=[0, self.waveform.shape[-1] / self.sample_rate, 0, self.sample_rate / 2])
+        plt.colorbar(format='%+2.0f dB', label='Power/Amplitude (dB)')
+        plt.title('Spectrogram')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Frequency (Hz)')
+        plt.ylim(0, 96000) # Set the frequency limit as per the settings
         plt.show()
 
 
@@ -103,11 +120,17 @@ if __name__ == '__main__':
     waveforms = dt.get_data()
     names = dt.get_file_names()
 
-    for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
-        sp = SpectrogramProcessor(waveforms[i])
-        sp.apply_highpass_filter()
-        # sp.compute_spectrogram()
-        sp.compute_mel_spectrogram()
-        sp.denoise_spectrogram()
-        # sp.save_spectrogram(f'{names[i]}', 'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms/')
-        # sp.plot_spectrogram(False)
+    s = SpectrogramProcessor(waveforms[3])
+    s.apply_highpass_filter()
+    s.compute_spectrogram()
+    s.denoise_spectrogram()
+    s.plot_new()
+
+#    for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
+#        sp = SpectrogramProcessor(waveforms[i])
+#        sp.apply_highpass_filter()
+#        sp.compute_spectrogram()
+#        # sp.compute_mel_spectrogram()
+#        sp.denoise_spectrogram()
+#        # sp.save_spectrogram(f'{names[i]}', 'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms/')
+#        sp.plot_spectrogram(False)
