@@ -1,9 +1,12 @@
 # .idea files
-.iml
-.xml
+*.iml
+*.xml
 
 # logfiles
-.log
+*.log
+
+# audiofiles
+*.wav
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
