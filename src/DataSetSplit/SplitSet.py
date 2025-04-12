@@ -66,9 +66,10 @@ class SplitSet:
         self.criteria = list(set(self.criteria_labels.values()))
 
     def get_number_of_distinct_criteria(self):
+        self.criteria = []
         for criterion in self.criteria_labels.values():
             if criterion not in self.criteria:
-               self.criteria.append(criterion)
+                self.criteria.append(criterion)
 
     def combine_labels_criteria(self):
         # Create dictionary to store combined labels
@@ -84,66 +85,150 @@ class SplitSet:
             criterion_label = self.criteria_labels[filename]
             self.combined_labels[class_label][criterion_label].append(filename)
 
-    def create_balanced_split(self, num_elements, set_type):
-        for element in range(num_elements):
-            for cl in self.classes:
-                for cr in self.criteria:
-                    if len(self.combined_labels[cl][cr]) > 0:
-                        selected_file = rd.choice(self.combined_labels[cl][cr])
-                        set_type.append(selected_file)
-                        self.combined_labels[cl][cr].remove(selected_file)
+    def _add_files_balanced(self, class_label, files_by_criterion, available_criteria, num_files, target_set):
+        """Helper method to add files to a set while maintaining balance across criteria"""
+        # If no files are needed, return immediately
+        if num_files <= 0:
+            return
 
-                        self.num_files_per_class[cl] -= 1
-                        self.num_files_per_criterion[cr] -= 1
+        files_added = 0
 
-                    else:
-                        # select a file from another criterion from the same class
-                        for cr2 in self.criteria:
-                            if cr2 != cr and len(self.combined_labels[cl][cr2]) > 0:
-                                selected_file = rd.choice(self.combined_labels[cl][cr2])
-                                set_type.append(selected_file)
-                                self.combined_labels[cl][cr2].remove(selected_file)
+        # First, try to distribute files evenly across criteria
+        files_per_criterion = max(1, num_files // len(available_criteria)) if available_criteria else 0
 
-                                self.num_files_per_class[cl] -= 1
-                                self.num_files_per_criterion[cr2] -= 1
-                                break
+        for cr in available_criteria:
+            # Get the number of files to select from this criterion
+            to_select = min(files_per_criterion, len(files_by_criterion[cr]))
 
-                            # if no other criterion is available, raise warning
-                            if cr2 == self.criteria[-1]:
-                                print(f"Warning: No more files available for class {cl}.")
-                                break
+            # Select random files from this criterion
+            if to_select > 0:
+                selected = rd.sample(files_by_criterion[cr], to_select)
+                target_set.extend(selected)
 
-    def create_random_split(self, num_elements, set_type):
-        for element in range(num_elements):
-            for cl in self.classes:
-            # Check if there are files available for the class
-                random_criterion = rd.choice(self.criteria)
-                if len(self.combined_labels[cl][random_criterion]) > 0:
-                    selected_file = rd.choice(self.combined_labels[cl][random_criterion])
-                    set_type.append(selected_file)
-                    self.combined_labels[cl][random_criterion].remove(selected_file)
+                # Remove selected files from the pool
+                for file in selected:
+                    files_by_criterion[cr].remove(file)
 
-                    self.num_files_per_class[cl] -= 1
-                    self.num_files_per_criterion[random_criterion] -= 1
-                else:
-                    # select a file from another random criterion from the same class
-                    for i in range(len(self.criteria) - 1):
-                        random_criterion = rd.choice(self.criteria)
-                        if len(self.combined_labels[cl][random_criterion]) > 0:
-                            selected_file = rd.choice(self.combined_labels[cl][random_criterion])
-                            set_type.append(selected_file)
-                            self.combined_labels[cl][random_criterion].remove(selected_file)
+                files_added += to_select
 
-                            self.num_files_per_class[cl] -= 1
-                            self.num_files_per_criterion[random_criterion] -= 1
-                            break
+        # If we need more files, take them from any available criterion
+        remaining = num_files - files_added
+        if remaining > 0:
+            # Update available criteria
+            available_criteria = [cr for cr in self.criteria if len(files_by_criterion[cr]) > 0]
 
-                    # if no other criterion is available, raise warning
-                    if random_criterion == self.criteria[-1]:
-                        print(f"Warning: No more files available for class {cl}.")
-                        break
+            while remaining > 0 and available_criteria:
+                # Select a random criterion
+                criterion = rd.choice(available_criteria)
+
+                if len(files_by_criterion[criterion]) > 0:
+                    # Select a random file from this criterion
+                    selected_file = rd.choice(files_by_criterion[criterion])
+                    target_set.append(selected_file)
+
+                    # Remove selected file from the pool
+                    files_by_criterion[criterion].remove(selected_file)
+                    remaining -= 1
+
+                # Update available criteria
+                available_criteria = [cr for cr in self.criteria if len(files_by_criterion[cr]) > 0]
+
+    def create_balanced_split(self):
+        """
+        Create a balanced split where each class has exactly the specified number of files,
+        and files are evenly distributed across criteria when possible.
+        """
+        # Calculate how many files to select per class based on the split ratios
+        train_files_per_class = int(self.files_per_class * self.split_ratio[0])
+        val_files_per_class = int(self.files_per_class * self.split_ratio[1])
+        test_files_per_class = self.files_per_class - train_files_per_class - val_files_per_class
+
+        print(f"Files per class - Train: {train_files_per_class}, Val: {val_files_per_class}, Test: {test_files_per_class}")
+
+        # For each class, select the specified number of files for each set
+        for cl in self.classes:
+            # Create a pool of all files for this class, grouped by criterion
+            files_by_criterion = {}
+            for cr in self.criteria:
+                files_by_criterion[cr] = self.combined_labels[cl][cr].copy()
+
+            # Get available criteria (those with at least one file)
+            available_criteria = [cr for cr in self.criteria if len(files_by_criterion[cr]) > 0]
+
+            # Calculate total files in this class
+            total_files_in_class = sum(len(files) for files in files_by_criterion.values())
+
+            if total_files_in_class < self.files_per_class:
+                print(f"Warning: Class {cl} has fewer files ({total_files_in_class}) than requested ({self.files_per_class}).")
+                continue
+
+            # Add files to train set
+            self._add_files_balanced(cl, files_by_criterion, available_criteria, train_files_per_class, self.train_set)
+
+            # Update available criteria for val set
+            available_criteria = [cr for cr in self.criteria if len(files_by_criterion[cr]) > 0]
+
+            # Add files to validation set (only if val_files_per_class > 0)
+            self._add_files_balanced(cl, files_by_criterion, available_criteria, val_files_per_class, self.val_set)
+
+            # Update available criteria for test set
+            available_criteria = [cr for cr in self.criteria if len(files_by_criterion[cr]) > 0]
+
+            # Add files to test set (only if test_files_per_class > 0)
+            self._add_files_balanced(cl, files_by_criterion, available_criteria, test_files_per_class, self.test_set)
+
+    def create_random_split(self):
+        """
+        Create a random split where each class has exactly the specified number of files,
+        with files selected randomly regardless of criterion.
+        """
+        # Calculate how many files to select per class based on the split ratios
+        train_files_per_class = int(self.files_per_class * self.split_ratio[0])
+        val_files_per_class = int(self.files_per_class * self.split_ratio[1])
+        test_files_per_class = self.files_per_class - train_files_per_class - val_files_per_class
+
+        print(f"Files per class - Train: {train_files_per_class}, Val: {val_files_per_class}, Test: {test_files_per_class}")
+
+        # For each class, select the specified number of files for each set
+        for cl in self.classes:
+            # Create a pool of all files for this class
+            all_files = []
+            for cr in self.criteria:
+                all_files.extend(self.combined_labels[cl][cr])
+
+            if len(all_files) < self.files_per_class:
+                print(f"Warning: Class {cl} has fewer files ({len(all_files)}) than requested ({self.files_per_class}).")
+                continue
+
+            # Shuffle the files
+            rd.shuffle(all_files)
+
+            # Add files to each set (respecting the counts)
+            current_index = 0
+
+            # Add files to train set
+            if train_files_per_class > 0:
+                self.train_set.extend(all_files[current_index:current_index + train_files_per_class])
+                current_index += train_files_per_class
+
+            # Add files to validation set
+            if val_files_per_class > 0:
+                self.val_set.extend(all_files[current_index:current_index + val_files_per_class])
+                current_index += val_files_per_class
+
+            # Add files to test set
+            if test_files_per_class > 0:
+                self.test_set.extend(all_files[current_index:current_index + test_files_per_class])
 
     def create_splits(self, files_per_class, merge_labels=None, merge_criteria=None):
+        # Store the files_per_class parameter
+        self.files_per_class = files_per_class
+
+        # Clear any existing splits
+        self.train_set = []
+        self.val_set = []
+        self.test_set = []
+
         # Get the number of distinct classes and criteria
         self.get_number_of_distinct_criteria()
 
@@ -153,27 +238,24 @@ class SplitSet:
         if merge_criteria is not None:
             self.merge_criteria_labels(merge_criteria)
 
-        # Split the data according to the selected method and criteria
+        # Count files per class and criterion (for informational purposes)
         self.num_files_per_class = {label: sum(1 for filename in self.filenames if self.class_labels[filename] == label) for label in self.classes}
         self.num_files_per_criterion = {label: sum(1 for filename in self.filenames if self.criteria_labels[filename] == label) for label in self.criteria}
 
-        num_train = int(files_per_class * self.split_ratio[0])
-        num_val = int(files_per_class * self.split_ratio[1])
-        num_test = int(files_per_class * self.split_ratio[2])
+        print("Available files per class:", self.num_files_per_class)
+        print("Available files per criterion:", self.num_files_per_criterion)
 
         # Combine labels and criteria into a single dictionary
         self.combine_labels_criteria()
 
-        # Select iteratively from each class and criterion a random file
+        # Create the splits according to the selected method
         if self.split_method == "balanced":
-            self.create_balanced_split(num_train, self.train_set)
-            self.create_balanced_split(num_val, self.val_set)
-            self.create_balanced_split(num_test, self.test_set)
-
+            self.create_balanced_split()
         elif self.split_method == "random":
-            self.create_random_split(num_train, self.train_set)
-            self.create_random_split(num_val, self.val_set)
-            self.create_random_split(num_test, self.test_set)
+            self.create_random_split()
+
+        # Print final set sizes
+        print(f"Final set sizes - Train: {len(self.train_set)}, Val: {len(self.val_set)}, Test: {len(self.test_set)}")
 
     def move_files(self, target_path):
         # Check if target path exists, if not create it
@@ -238,6 +320,6 @@ if __name__ == "__main__":
     split_set = SplitSet(data_source_path, labels_path, data_target_path)
     split_set.read_data("File", "Verification 1", "location")
     split_set.select_split_method("balanced")
-    split_set.select_split_ratio(0.8, 0.1, 0.1)
-    split_set.create_splits(30, merge_labels=bat_species)
+    split_set.select_split_ratio(1, 0, 0)
+    split_set.create_splits(20, merge_labels=bat_species)
     split_set.move_files(data_target_path)
