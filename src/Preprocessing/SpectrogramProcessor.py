@@ -35,7 +35,7 @@ class SpectrogramProcessor:
         self.spectrogram = transform(self.waveform)
         return self.spectrogram.to('cpu')
 
-    def compute_mel_spectrogram(self, n_mels=256, n_fft=4096, hop_length=256):
+    def compute_mel_spectrogram(self, n_mels=256, n_fft=1024, hop_length=256, win_length=1024):
         """
         Computes a Mel spectrogram optimized for high-frequency bat calls.
         Uses a high number of Mel bins to capture fine details.
@@ -45,7 +45,9 @@ class SpectrogramProcessor:
             n_fft=n_fft,
             hop_length=hop_length,
             n_mels=n_mels,
-            f_min=1000,  # Ignore low frequencies (<1 kHz) as bat calls are usually higher
+            win_length=win_length,
+            mel_scale="htk",
+            f_min=0,
             f_max=self.sample_rate // 2  # Use Nyquist frequency (48 kHz for 96 kHz recordings)
         ).to(self.device)
 
@@ -123,6 +125,7 @@ if __name__ == '__main__':
     s = SpectrogramProcessor(waveforms[3])
     s.apply_highpass_filter()
     s.compute_spectrogram()
+    print(s.spectrogram.shape)
     s.denoise_spectrogram()
     s.plot_new()
 
