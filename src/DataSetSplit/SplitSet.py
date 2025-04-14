@@ -2,6 +2,8 @@ import pandas as pd
 import os
 import random as rd
 import shutil as sh
+from collections import defaultdict
+from tqdm import tqdm
 
 
 class SplitSet:
@@ -84,6 +86,70 @@ class SplitSet:
             class_label = self.class_labels[filename]
             criterion_label = self.criteria_labels[filename]
             self.combined_labels[class_label][criterion_label].append(filename)
+
+    def export_to_excel(self, output_dir):
+        """
+        Export dataset information to three separate Excel files (train, val, test),
+        each with three columns:
+        - filename
+        - class label
+        - criteria
+
+        Args:
+            output_dir: Directory where the Excel files will be saved
+        """
+        # Make sure the output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Create DataFrames for each set
+        train_data = []
+        val_data = []
+        test_data = []
+
+        # Populate train set data
+        for filename in self.train_set:
+            train_data.append({
+                'Filename': filename,
+                'Class': self.class_labels[filename],
+                'Criterion': self.criteria_labels[filename]
+            })
+
+        # Populate validation set data
+        for filename in self.val_set:
+            val_data.append({
+                'Filename': filename,
+                'Class': self.class_labels[filename],
+                'Criterion': self.criteria_labels[filename]
+            })
+
+        # Populate test set data
+        for filename in self.test_set:
+            test_data.append({
+                'Filename': filename,
+                'Class': self.class_labels[filename],
+                'Criterion': self.criteria_labels[filename]
+            })
+
+        # Convert to DataFrames
+        train_df = pd.DataFrame(train_data)
+        val_df = pd.DataFrame(val_data)
+        test_df = pd.DataFrame(test_data)
+
+        # Save to Excel files
+        train_path = os.path.join(output_dir, "train_dataset_info.xlsx")
+        val_path = os.path.join(output_dir, "val_dataset_info.xlsx")
+        test_path = os.path.join(output_dir, "test_dataset_info.xlsx")
+
+        train_df.to_excel(train_path, index=False)
+        val_df.to_excel(val_path, index=False)
+        test_df.to_excel(test_path, index=False)
+
+        print(f"Train set information exported to {train_path}")
+        print(f"Validation set information exported to {val_path}")
+        print(f"Test set information exported to {test_path}")
+
+        # Report counts
+        print(f"Records exported - Train: {len(train_data)}, Val: {len(val_data)}, Test: {len(test_data)}")
 
     def _add_files_balanced(self, class_label, files_by_criterion, available_criteria, num_files, target_set):
         """Helper method to add files to a set while maintaining balance across criteria"""
@@ -263,23 +329,92 @@ class SplitSet:
             os.makedirs(target_path)
 
         # Move files to the target path
-        for filename in self.train_set:
+        for filename in tqdm(self.train_set, desc="Moving train files"):
             source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.wav')
             target = os.path.join(target_path, "train", f'{filename}.wav')
             os.makedirs(os.path.dirname(target), exist_ok=True)
             sh.copyfile(source, target)
 
-        for filename in self.val_set:
+        for filename in tqdm(self.val_set, desc="Moving val files"):
             source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.wav')
             target = os.path.join(target_path, "val", f'{filename}.wav')
             os.makedirs(os.path.dirname(target), exist_ok=True)
             sh.copyfile(source, target)
 
-        for filename in self.test_set:
+        for filename in tqdm(self.test_set, desc="Moving test files"):
             source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.wav')
             target = os.path.join(target_path, "test", f'{filename}.wav')
             os.makedirs(os.path.dirname(target), exist_ok=True)
             sh.copyfile(source, target)
+
+    def count_files_in_folder(self, folder_path):
+        """
+        Count files in a folder grouped by class and criterion.
+
+        Args:
+            folder_path: Path to the folder containing files to count
+
+        Returns:
+            Prints the count of files by class and criterion
+        """
+        # Check if the folder exists
+        if not os.path.exists(folder_path):
+            print(f"Error: Folder {folder_path} does not exist")
+            return
+
+        # Initialize counters
+        class_counts = defaultdict(int)
+        criterion_counts = defaultdict(int)
+        class_criterion_counts = defaultdict(lambda: defaultdict(int))
+
+        # Get files in the folder
+        files = []
+        for root, _, filenames in os.walk(folder_path):
+            for filename in filenames:
+                if filename.endswith('.wav'):
+                    # Extract just the filename without extension
+                    base_name = os.path.splitext(filename)[0]
+                    files.append(base_name)
+
+        # Count files by class and criterion
+        for filename in files:
+            if filename in self.class_labels:
+                class_label = self.class_labels[filename]
+                class_counts[class_label] += 1
+
+                if filename in self.criteria_labels:
+                    criterion_label = self.criteria_labels[filename]
+                    criterion_counts[criterion_label] += 1
+                    class_criterion_counts[class_label][criterion_label] += 1
+
+        # Print results
+        print(f"\nFile counts in {folder_path}:")
+        print("=" * 50)
+
+        print("\nCounts by Class:")
+        print("-" * 50)
+        for cls, count in sorted(class_counts.items()):
+            print(f"{cls}: {count} files")
+
+        print("\nCounts by Criterion:")
+        print("-" * 50)
+        for criterion, count in sorted(criterion_counts.items()):
+            print(f"{criterion}: {count} files")
+
+        print("\nCounts by Class and Criterion:")
+        print("-" * 50)
+        for cls in sorted(class_criterion_counts.keys()):
+            print(f"\nClass: {cls}")
+            for criterion, count in sorted(class_criterion_counts[cls].items()):
+                print(f"  - {criterion}: {count} files")
+
+        print("\nTotal files:", len(files))
+        return {
+            "class_counts": dict(class_counts),
+            "criterion_counts": dict(criterion_counts),
+            "class_criterion_counts": {k: dict(v) for k, v in class_criterion_counts.items()},
+            "total": len(files)
+        }
 
 
 if __name__ == "__main__":
@@ -315,11 +450,18 @@ if __name__ == "__main__":
 
     data_source_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequences"
     labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged.xlsx"
-    data_target_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Test_SplitData"
+    data_target_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha"
 
     split_set = SplitSet(data_source_path, labels_path, data_target_path)
     split_set.read_data("File", "Verification 1", "location")
     split_set.select_split_method("balanced")
-    split_set.select_split_ratio(1, 0, 0)
-    split_set.create_splits(20, merge_labels=bat_species)
+    split_set.select_split_ratio(0.7, 0.15, 0.15)
+    split_set.create_splits(2762, merge_labels=bat_species)
     split_set.move_files(data_target_path)
+    split_set.export_to_excel(os.path.join(data_target_path, "dataset_info.xlsx"))
+
+    # Count files in the train, validation, and test folders
+    print("\nCounting files in the target folders:")
+    split_set.count_files_in_folder(os.path.join(data_target_path, "train"))
+    split_set.count_files_in_folder(os.path.join(data_target_path, "val"))
+    split_set.count_files_in_folder(os.path.join(data_target_path, "test"))
