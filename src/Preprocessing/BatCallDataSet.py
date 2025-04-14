@@ -42,7 +42,7 @@ class BatCallDataset(Dataset):
 if __name__ == '__main__':
     # Example usage
     spec_dir = 'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms'
-    lab_loader = LabelsLoader('C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels.xlsx')
+    lab_loader = LabelsLoader('C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/LabelsAlpha.xlsx', filename_column="File", text_column="label")
     lab_loader.load_labels_excel()
 
     dataset = BatCallDataset(spec_dir, lab_loader)
