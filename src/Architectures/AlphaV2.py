@@ -9,15 +9,11 @@ class AlphaV2(nn.Module):
 
         # Convolutional layers
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(32)
         self.pool = nn.MaxPool2d(2, 2)
         self.dropout = nn.Dropout(dropout_rate)
 
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(64)
-
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
-        self.bn3 = nn.BatchNorm2d(128)
 
         # Global average pooling - works with any input size
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -29,21 +25,18 @@ class AlphaV2(nn.Module):
     def forward(self, x):
         # First block
         x = self.conv1(x)
-        x = self.bn1(x)
         x = F.relu(x)
         x = self.pool(x)
         x = self.dropout(x)
 
         # Second block
         x = self.conv2(x)
-        x = self.bn2(x)
         x = F.relu(x)
         x = self.pool(x)
         x = self.dropout(x)
 
         # Third block
         x = self.conv3(x)
-        x = self.bn3(x)
         x = F.relu(x)
         x = self.pool(x)
 
