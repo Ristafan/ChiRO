@@ -103,14 +103,14 @@ def collate_fn(batch):
     spectrograms = [item[0] for item in batch]
     labels = [item[1] for item in batch]
 
-    max_len = max(spec.shape[1] for spec in spectrograms)
-    padded_specs = [F.pad(spec, (0, max_len - spec.shape[1])) for spec in spectrograms]
-    spectrograms = torch.stack(padded_specs)
+    # Find max time length
+    max_len = max(spec.shape[-1] for spec in spectrograms)
 
-    # Normalize per batch (mean 0, std 1)
-    mean = spectrograms.mean()
-    std = spectrograms.std()
-    spectrograms = (spectrograms - mean) / (std + 1e-6)
+    # Pad time dimension (last dim) to max_len
+    padded_specs = [F.pad(spec, (0, max_len - spec.shape[-1])) for spec in spectrograms]
+
+    # Now they all should have the same shape: [1, freq_bins, max_len]
+    spectrograms = torch.stack(padded_specs)
 
     labels = torch.stack(labels, dim=0)
     return spectrograms, labels
@@ -119,11 +119,12 @@ def collate_fn(batch):
 if __name__ == '__main__':
     # Set up paths
     spectrogram_already_computed = True
-    example_data = False
+    example_data = True
 
-    audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData"
-    spectrograms_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleSpectrograms"
-    labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels_exampledata.xlsx"
+    # Paths for example data
+    audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train"
+    spectrograms_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/Spectrograms"
+    labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/dataset_info/train_dataset_info.xlsx"
 
     model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha"
 
@@ -141,11 +142,11 @@ if __name__ == '__main__':
         config={
             "notes": "",
             "learning_rate": 0.001,
-            "dataset": "BatCalls-Environment",
-            "num_epochs": 15,
+            "dataset": "Example-BatCalls-Environment",
+            "num_epochs": 2,
             "batch_size": 8,
             "model": "AlphaV2",
-            "model_name": "alphaV2_best.pth",
+            "model_name": "alphaV2_example.pth",
         },
     )
 
@@ -167,7 +168,7 @@ if __name__ == '__main__':
             sp.save_spectrogram(f'{names[i]}', spectrograms_path + '/')
 
     # Load training labels from Excel
-    labels_loader = LabelsLoader(labels_path, filename_column="Filename", text_column="label")
+    labels_loader = LabelsLoader(labels_path, filename_column="Filename", text_column="Class")
     labels_loader.load_labels_excel()
 
     # Create training Dataset & DataLoader
@@ -202,7 +203,7 @@ if __name__ == '__main__':
 
     # Number of parameters in the model
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    config.notes = f"Number of parameters: {num_params}"
+    run.config.update({"num_params": f'The number of params is {num_params}'})
 
-    # Log a final summary
-    wandb.run.summary["num_parameters"] = num_params
+    # Finish the run
+    run.finish()
