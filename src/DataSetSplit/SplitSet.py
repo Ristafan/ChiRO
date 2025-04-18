@@ -87,7 +87,7 @@ class SplitSet:
             criterion_label = self.criteria_labels[filename]
             self.combined_labels[class_label][criterion_label].append(filename)
 
-    def export_to_excel(self, output_dir):
+    def export_to_excel(self, output_dir, enumerate_classes=True):
         """
         Export dataset information to three separate Excel files (train, val, test),
         each with three columns:
@@ -98,6 +98,13 @@ class SplitSet:
         Args:
             output_dir: Directory where the Excel files will be saved
         """
+        class_num_labels = {}
+        if enumerate_classes:
+            num_label = 0
+            for i in self.classes:
+                class_num_labels[i] = num_label
+                num_label += 1
+
         # Make sure the output directory exists
         os.makedirs(output_dir, exist_ok=True)
 
@@ -111,7 +118,8 @@ class SplitSet:
             train_data.append({
                 'Filename': filename,
                 'Class': self.class_labels[filename],
-                'Criterion': self.criteria_labels[filename]
+                'Criterion': self.criteria_labels[filename],
+                'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
             })
 
         # Populate validation set data
@@ -119,7 +127,8 @@ class SplitSet:
             val_data.append({
                 'Filename': filename,
                 'Class': self.class_labels[filename],
-                'Criterion': self.criteria_labels[filename]
+                'Criterion': self.criteria_labels[filename],
+                'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
             })
 
         # Populate test set data
@@ -127,7 +136,8 @@ class SplitSet:
             test_data.append({
                 'Filename': filename,
                 'Class': self.class_labels[filename],
-                'Criterion': self.criteria_labels[filename]
+                'Criterion': self.criteria_labels[filename],
+                'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
             })
 
         # Convert to DataFrames
