@@ -1,6 +1,7 @@
 # .idea files
 *.iml
 *.xml
+*.yaml
 
 # logfiles
 *.log
@@ -8,8 +9,12 @@
 # audiofiles
 *.wav
 
-# wandb folder
-wandb/
+# other files
+*.json
+*.csv
+*.xlsx
+*.pt
+*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
