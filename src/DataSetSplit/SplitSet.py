@@ -458,7 +458,7 @@ if __name__ == "__main__":
     split_set.select_split_ratio(0.7, 0.15, 0.15)
     split_set.create_splits(2762, merge_labels=bat_species)
     split_set.move_files(data_target_path)
-    split_set.export_to_excel(os.path.join(data_target_path, "dataset_info.xlsx"))
+    split_set.export_to_excel(os.path.join(data_target_path, "dataset_info"))
 
     # Count files in the train, validation, and test folders
     print("\nCounting files in the target folders:")
