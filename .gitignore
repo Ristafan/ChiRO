@@ -2,6 +2,7 @@
 *.iml
 *.xml
 *.yaml
+*.toml
 
 # logfiles
 *.log
