@@ -8,37 +8,42 @@ from tqdm import tqdm
 
 
 class SpectrogramProcessor:
-    def __init__(self, waveform, sample_rate=192000):
+    def __init__(self, waveform, sample_rate=192000, device=None):
         """
         Initialize with a waveform tensor.
         :param waveform: Tensor of shape (channels, time)
         :param sample_rate: Sample rate of the waveform (default: 96kHz)
+        :param device: The torch device to use ('cuda' or 'cpu'). Defaults to CUDA if available.
         """
         self.waveform = waveform
         self.sample_rate = sample_rate
         self.spectrogram = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def apply_highpass_filter(self, cutoff_freq=16000):
         """
         Applies a high-pass filter to remove frequencies below 16 kHz.
         Useful for isolating bat echolocation calls.
         """
-        self.waveform = F.highpass_biquad(self.waveform, sample_rate=self.sample_rate, cutoff_freq=cutoff_freq)
+        self.waveform = F.highpass_biquad(self.waveform.to(self.device), sample_rate=self.sample_rate, cutoff_freq=cutoff_freq).cpu()
 
     def compute_spectrogram(self, n_fft=4096, hop_length=None, win_length=2048):
         """
         Computes a high-resolution spectrogram optimized for bat echolocation calls.
+        Moves the transform to the device only when needed and keeps the result on CPU.
+        Reduced default n_fft and win_length.
         """
         transform = T.Spectrogram(n_fft=n_fft, win_length=win_length, hop_length=hop_length, power=2.0).to(self.device)
-        self.waveform = self.waveform.to(self.device)
-        self.spectrogram = transform(self.waveform)
-        return self.spectrogram.to('cpu')
+        waveform_gpu = self.waveform.to(self.device)
+        spectrogram_gpu = transform(waveform_gpu)
+        self.spectrogram = spectrogram_gpu.cpu()
+        return self.spectrogram
 
     def compute_mel_spectrogram(self, n_mels=256, n_fft=1024, hop_length=256, win_length=1024):
         """
         Computes a Mel spectrogram optimized for high-frequency bat calls.
         Uses a high number of Mel bins to capture fine details.
+        Reduced default n_mels, n_fft, and win_length.
         """
         transform = T.MelSpectrogram(
             sample_rate=self.sample_rate,
@@ -51,14 +56,15 @@ class SpectrogramProcessor:
             f_max=self.sample_rate // 2  # Use Nyquist frequency (48 kHz for 96 kHz recordings)
         ).to(self.device)
 
-        self.waveform = self.waveform.to(self.device)
-        self.spectrogram = transform(self.waveform)
-        return self.spectrogram.to('cpu')
+        waveform_gpu = self.waveform.to(self.device)
+        spectrogram_gpu = transform(waveform_gpu)
+        self.spectrogram = spectrogram_gpu.cpu()
+        return self.spectrogram
 
     def denoise_spectrogram(self):
         """
         Removes noise by subtracting the mean amplitude from each frequency bin.
-        Assumes spectrogram is already computed.
+        Assumes spectrogram is already computed and is on the CPU.
         """
         if self.spectrogram is None:
             raise ValueError("Spectrogram has not been computed yet.")
