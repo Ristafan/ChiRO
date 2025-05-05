@@ -39,8 +39,8 @@ class Test:
 
         if not self.spectrogram_processed:
             # Load the data
-            data_loader = AudioLoader(self.data_path)
-            data_loader.load_folder()
+            data_loader = AudioLoader()
+            data_loader.load_audio_from_exel(self.data_path + '/dataset_info/test_dataset_info.xlsx')
             data = data_loader.get_data()
 
             if not os.path.exists(self.data_path + '/TestSpectrograms/'):

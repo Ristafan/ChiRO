@@ -117,10 +117,9 @@ class SpectrogramProcessor:
 
 
 if __name__ == '__main__':
-    dt = AudioLoader('C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData')
-    dt.load_folder()
+    dt = AudioLoader()
+    dt.load_audio_from_exel('C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/dataset_info/train_dataset_info.xlsx')
     waveforms = dt.get_data()
-    names = dt.get_file_names()
 
     s = SpectrogramProcessor(waveforms[3])
     s.apply_highpass_filter()

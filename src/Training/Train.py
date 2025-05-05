@@ -154,10 +154,10 @@ if __name__ == '__main__':
 
     if not spectrogram_already_computed:
         # Load Audio Files and create spectrograms
-        audio_loader = AudioLoader(audioloader_path)
-        audio_loader.load_folder()
+        audio_loader = AudioLoader()
+        audio_loader.load_audio_from_exel(audioloader_path)
         waveforms = audio_loader.get_data()
-        names = audio_loader.get_file_names()
+        names = audio_loader.get_file_names_from_excel(audioloader_path)
 
         # Create Spectrograms
         for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):

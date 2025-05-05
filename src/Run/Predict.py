@@ -30,7 +30,7 @@ class Predictor():
         :return: Predicted class.
         """
         # Load the audio file
-        audio_loader = AudioLoader(self.data_path)
+        audio_loader = AudioLoader()
         waveform, _ = audio_loader.load_wav_file(filename)
 
         # Process the waveform
