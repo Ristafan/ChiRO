@@ -363,7 +363,7 @@ class SplitSet:
         for filename in self.train_set:
             train_data.append({
                 'Filename': filename,
-                'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.wav'),
+                'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV'),
                 'Class': self.class_labels[filename],
                 'Criterion': self.criteria_labels[filename],
                 'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
@@ -373,7 +373,7 @@ class SplitSet:
         for filename in self.val_set:
             val_data.append({
                 'Filename': filename,
-                'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.wav'),
+                'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV'),
                 'Class': self.class_labels[filename],
                 'Criterion': self.criteria_labels[filename],
                 'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
@@ -383,7 +383,7 @@ class SplitSet:
         for filename in self.test_set:
             test_data.append({
                 'Filename': filename,
-                'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.wav'),
+                'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV'),
                 'Class': self.class_labels[filename],
                 'Criterion': self.criteria_labels[filename],
                 'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
@@ -414,20 +414,20 @@ class SplitSet:
 
         # Move files to the target path
         for filename in tqdm(self.train_set, desc="Moving train files"):
-            source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.wav')
-            target = os.path.join(target_path, "train", f'{filename}.wav')
+            source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV')
+            target = os.path.join(target_path, "train", f'{filename}.WAV')
             os.makedirs(os.path.dirname(target), exist_ok=True)
             sh.copyfile(source, target)
 
         for filename in tqdm(self.val_set, desc="Moving val files"):
-            source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.wav')
-            target = os.path.join(target_path, "val", f'{filename}.wav')
+            source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV')
+            target = os.path.join(target_path, "val", f'{filename}.WAV')
             os.makedirs(os.path.dirname(target), exist_ok=True)
             sh.copyfile(source, target)
 
         for filename in tqdm(self.test_set, desc="Moving test files"):
-            source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.wav')
-            target = os.path.join(target_path, "test", f'{filename}.wav')
+            source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV')
+            target = os.path.join(target_path, "test", f'{filename}.WAV')
             os.makedirs(os.path.dirname(target), exist_ok=True)
             sh.copyfile(source, target)
 
@@ -455,7 +455,7 @@ class SplitSet:
         files = []
         for root, _, filenames in os.walk(folder_path):
             for filename in filenames:
-                if filename.endswith('.wav'):
+                if filename.endswith('.WAV'):
                     # Extract just the filename without extension
                     base_name = os.path.splitext(filename)[0]
                     files.append(base_name)
