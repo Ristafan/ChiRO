@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 import torch
 
 
-from src.Logging.Logger import Logger
+from src import Logging
 from src.Preprocessing.AudioLoader import AudioLoader
 from src.Preprocessing.LabelsLoader import LabelsLoader
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
