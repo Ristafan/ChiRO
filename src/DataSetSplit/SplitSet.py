@@ -540,7 +540,7 @@ if __name__ == "__main__":
     split_set.read_data("File", "Verification 1", "location")
     split_set.select_split_method("balanced")
     split_set.select_split_ratio(0.7, 0.15, 0.15)
-    split_set.create_splits(40, merge_labels=bat_species)
+    split_set.create_splits(2767, merge_labels=bat_species)
     # split_set.move_files(data_target_path)
     split_set.export_to_excel(os.path.join(data_target_path, "dataset_info"), enumerate_classes=True)
     split_set.export_to_excel(os.path.join(data_target_path, "dataset_info"))
