@@ -87,80 +87,6 @@ class SplitSet:
             criterion_label = self.criteria_labels[filename]
             self.combined_labels[class_label][criterion_label].append(filename)
 
-    def export_to_excel(self, output_dir, enumerate_classes=True):
-        """
-        Export dataset information to three separate Excel files (train, val, test),
-        each with three columns:
-        - filename
-        - class label
-        - criteria
-
-        Args:
-            output_dir: Directory where the Excel files will be saved
-        """
-        class_num_labels = {}
-        if enumerate_classes:
-            num_label = 0
-            for i in self.classes:
-                class_num_labels[i] = num_label
-                num_label += 1
-
-        # Make sure the output directory exists
-        os.makedirs(output_dir, exist_ok=True)
-
-        # Create DataFrames for each set
-        train_data = []
-        val_data = []
-        test_data = []
-
-        # Populate train set data
-        for filename in self.train_set:
-            train_data.append({
-                'Filename': filename,
-                'Class': self.class_labels[filename],
-                'Criterion': self.criteria_labels[filename],
-                'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
-            })
-
-        # Populate validation set data
-        for filename in self.val_set:
-            val_data.append({
-                'Filename': filename,
-                'Class': self.class_labels[filename],
-                'Criterion': self.criteria_labels[filename],
-                'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
-            })
-
-        # Populate test set data
-        for filename in self.test_set:
-            test_data.append({
-                'Filename': filename,
-                'Class': self.class_labels[filename],
-                'Criterion': self.criteria_labels[filename],
-                'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
-            })
-
-        # Convert to DataFrames
-        train_df = pd.DataFrame(train_data)
-        val_df = pd.DataFrame(val_data)
-        test_df = pd.DataFrame(test_data)
-
-        # Save to Excel files
-        train_path = os.path.join(output_dir, "train_dataset_info.xlsx")
-        val_path = os.path.join(output_dir, "val_dataset_info.xlsx")
-        test_path = os.path.join(output_dir, "test_dataset_info.xlsx")
-
-        train_df.to_excel(train_path, index=False)
-        val_df.to_excel(val_path, index=False)
-        test_df.to_excel(test_path, index=False)
-
-        print(f"Train set information exported to {train_path}")
-        print(f"Validation set information exported to {val_path}")
-        print(f"Test set information exported to {test_path}")
-
-        # Report counts
-        print(f"Records exported - Train: {len(train_data)}, Val: {len(val_data)}, Test: {len(test_data)}")
-
     def _add_files_balanced(self, class_label, files_by_criterion, available_criteria, num_files, target_set):
         """Helper method to add files to a set while maintaining balance across criteria"""
         # If no files are needed, return immediately
@@ -236,6 +162,7 @@ class SplitSet:
 
             if total_files_in_class < self.files_per_class:
                 print(f"Warning: Class {cl} has fewer files ({total_files_in_class}) than requested ({self.files_per_class}).")
+                print("IF THIS WARNING APPEARS, PLEASE CHECK THE CLASS LABELS IN THE EXCEL FILE.")
                 continue
 
             # Add files to train set
@@ -333,7 +260,7 @@ class SplitSet:
         # Print final set sizes
         print(f"Final set sizes - Train: {len(self.train_set)}, Val: {len(self.val_set)}, Test: {len(self.test_set)}")
 
-    def export_to_excel(self, output_dir, enumerate_classes=True):
+    def export_to_excel(self, output_dir):
         """
         Export dataset information to three separate Excel files (train, val, test),
         each with three columns:
@@ -344,12 +271,12 @@ class SplitSet:
         Args:
             output_dir: Directory where the Excel files will be saved
         """
+        self.classes = list(set(self.class_labels.values()))
+        print(f"Distinct classes: {self.classes}")  # Debugging step
+
         class_num_labels = {}
-        if enumerate_classes:
-            num_label = 0
-            for i in self.classes:
-                class_num_labels[i] = num_label
-                num_label += 1
+        for num_label, class_label in enumerate(self.classes):
+            class_num_labels[class_label] = num_label
 
         # Make sure the output directory exists
         os.makedirs(output_dir, exist_ok=True)
@@ -366,7 +293,7 @@ class SplitSet:
                 'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV'),
                 'Class': self.class_labels[filename],
                 'Criterion': self.criteria_labels[filename],
-                'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
+                'label': class_num_labels[self.class_labels[filename]]
             })
 
         # Populate validation set data
@@ -376,7 +303,7 @@ class SplitSet:
                 'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV'),
                 'Class': self.class_labels[filename],
                 'Criterion': self.criteria_labels[filename],
-                'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
+                'label': class_num_labels[self.class_labels[filename]]
             })
 
         # Populate test set data
@@ -386,7 +313,7 @@ class SplitSet:
                 'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV'),
                 'Class': self.class_labels[filename],
                 'Criterion': self.criteria_labels[filename],
-                'label': class_num_labels[self.class_labels[filename]] if enumerate_classes else self.class_labels[filename]
+                'label': class_num_labels[self.class_labels[filename]]
             })
 
         # Convert to DataFrames
@@ -540,9 +467,8 @@ if __name__ == "__main__":
     split_set.read_data("File", "Verification 1", "location")
     split_set.select_split_method("balanced")
     split_set.select_split_ratio(0.7, 0.15, 0.15)
-    split_set.create_splits(2767, merge_labels=bat_species)
+    split_set.create_splits(2762, merge_labels=bat_species)
     # split_set.move_files(data_target_path)
-    split_set.export_to_excel(os.path.join(data_target_path, "dataset_info"), enumerate_classes=True)
     split_set.export_to_excel(os.path.join(data_target_path, "dataset_info"))
 
     # Count files in the train, validation, and test folders
