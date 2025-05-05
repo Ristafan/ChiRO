@@ -14,7 +14,7 @@ from src.Preprocessing.SpectrogramLoader import SpectrogramLoader
 from src.Architectures.AlphaV1 import AlphaV1
 from src.Architectures.AlphaV2 import AlphaV2
 from src.Preprocessing.BatCallDataSet import BatCallDataset
-
+from src.utils import load_config
 
 # Set memory allocation configuration
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
@@ -117,21 +117,22 @@ def collate_fn(batch):
 
 
 if __name__ == '__main__':
+    # Load configuration
+    config = load_config()
+
     # Set up paths
     spectrogram_already_computed = False
     example_data = False
 
     # Paths for example data
-    audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train"
-    spectrograms_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/Spectrograms"
-    labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/dataset_info/train_dataset_info.xlsx"
+    files_path = config['example_data']['train_files_labels']
+    spectrograms_path = config['spectrogram']['spectrograms_dir']
 
-    model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha"
+    model_path = config['model']['alpha']
 
     if not example_data:
-        audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/dataset_info/train_dataset_info.xlsx"
-        spectrograms_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms"
-        labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/dataset_info/train_dataset_info.xlsx"
+        files_path = config['dataset']['train_files_labels']
+        spectrograms_path = config['spectrogram']['spectrograms_dir']
 
     wandb.login(key="32b08e4c860b935b2cd9c30774889b952ffefe0d")
 
@@ -143,21 +144,21 @@ if __name__ == '__main__':
             "notes": "",
             "learning_rate": 0.001,
             "dataset": "Example-BatCalls-Environment",
-            "num_epochs": 2,
+            "num_epochs": 4,
             "batch_size": 8,
             "model": "AlphaV2",
-            "model_name": "alphaV2_example.pth",
+            "model_name": "alphaV2.pth",
         },
     )
 
-    config = wandb.config
+    wb_config = wandb.config
 
     if not spectrogram_already_computed:
         # Load Audio Files and create spectrograms
         audio_loader = AudioLoader()
-        audio_loader.load_audio_from_exel(audioloader_path)
+        audio_loader.load_audio_from_exel(files_path)
         waveforms = audio_loader.get_data()
-        names = audio_loader.get_file_names_from_excel(audioloader_path)
+        names = audio_loader.get_file_names_from_excel(files_path)
 
         # Create Spectrograms
         for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
@@ -168,12 +169,12 @@ if __name__ == '__main__':
             sp.save_spectrogram(f'{names[i]}', spectrograms_path + '/')
 
     # Load training labels from Excel
-    labels_loader = LabelsLoader(labels_path, filename_column="Filename", text_column="label")
+    labels_loader = LabelsLoader(files_path, filename_column="Filename", text_column="label")
     labels_loader.load_labels_excel()
 
     # Create training Dataset & DataLoader
     train_dataset = BatCallDataset(spectrograms_path, labels_loader)
-    train_loader = DataLoader(train_dataset, batch_size=config.batch_size,
+    train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size,
                               shuffle=True, collate_fn=collate_fn, num_workers=2)
 
     # Initialize Model
@@ -182,23 +183,23 @@ if __name__ == '__main__':
     # Log model architecture
     wandb.log({"model_summary": str(model)})
 
-    model = train_model(model, train_loader, num_epochs=config.num_epochs, learning_rate=config.learning_rate)
+    model = train_model(model, train_loader, num_epochs=wb_config.num_epochs, learning_rate=wb_config.learning_rate)
 
     # Ensure the directory exists
     os.makedirs(model_path, exist_ok=True)
 
     # Save the model
-    torch.save(model.state_dict(), os.path.join(model_path, config.model_name))
+    torch.save(model.state_dict(), os.path.join(model_path, wb_config.model_name))
 
     # Also save a checkpoint with more information
     checkpoint = {
-        'epoch': config.num_epochs,
+        'epoch': wb_config.num_epochs,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': None,  # You'd capture this from train_model if needed
         'loss': None,  # You'd capture this from train_model if needed
-        'config': {k: v for k, v in config.items()}
+        'config': {k: v for k, v in wb_config.items()}
     }
-    torch.save(checkpoint, os.path.join(model_path, 'checkpoint_' + config.model_name))
+    torch.save(checkpoint, os.path.join(model_path, 'checkpoint_' + wb_config.model_name))
 
     # Number of parameters in the model
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)

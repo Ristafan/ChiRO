@@ -1,0 +1,13 @@
+[dataset]
+train_files_labels = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/dataset_info/train_dataset_info.xlsx"
+
+[example_data]
+train_files_labels = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train"
+
+[spectrogram]
+spectrograms_dir = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/spectrograms"
+
+[model]
+alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/models/Alpha"
+beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/models/Beta"
+gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/models/Gamma"
