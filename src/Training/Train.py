@@ -1,17 +1,12 @@
-from torch import nn, optim
+from torch import nn
 from tqdm import tqdm
 import os
 import wandb
 from torch.utils.data import DataLoader
 import torch
-
-
-from src import Logging
 from src.Preprocessing.AudioLoader import AudioLoader
 from src.Preprocessing.LabelsLoader import LabelsLoader
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
-from src.Preprocessing.SpectrogramLoader import SpectrogramLoader
-from src.Architectures.AlphaV1 import AlphaV1
 from src.Architectures.AlphaV2 import AlphaV2
 from src.Preprocessing.BatCallDataSet import BatCallDataset
 from src.utils import load_config
