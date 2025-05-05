@@ -20,7 +20,7 @@ class BatCallDataset(Dataset):
 
     def __getitem__(self, idx):
         excel_filename = self.file_names[idx]
-        filename = f"spectrogram_{self.file_names[idx]}.WAV.pt"
+        filename = f"spectrogram_{self.file_names[idx]}.pt"
         spectrogram_path = os.path.join(self.spectrogram_dir, filename)
         spectrogram = torch.load(spectrogram_path)
 

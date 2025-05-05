@@ -118,8 +118,8 @@ def collate_fn(batch):
 
 if __name__ == '__main__':
     # Set up paths
-    spectrogram_already_computed = True
-    example_data = True
+    spectrogram_already_computed = False
+    example_data = False
 
     # Paths for example data
     audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train"
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha"
 
     if not example_data:
-        audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/train"
+        audioloader_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/dataset_info/train_dataset_info.xlsx"
         spectrograms_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms"
         labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/dataset_info/train_dataset_info.xlsx"
 
@@ -168,7 +168,7 @@ if __name__ == '__main__':
             sp.save_spectrogram(f'{names[i]}', spectrograms_path + '/')
 
     # Load training labels from Excel
-    labels_loader = LabelsLoader(labels_path, filename_column="Filename", text_column="Class")
+    labels_loader = LabelsLoader(labels_path, filename_column="Filename", text_column="label")
     labels_loader.load_labels_excel()
 
     # Create training Dataset & DataLoader
@@ -178,7 +178,6 @@ if __name__ == '__main__':
 
     # Initialize Model
     model = AlphaV2()
-
 
     # Log model architecture
     wandb.log({"model_summary": str(model)})

@@ -50,7 +50,7 @@ class AudioLoader:
     @staticmethod
     def get_file_names_from_excel(file_path):
         data = pd.read_excel(file_path)
-        return data['Filepath'].tolist()
+        return data['Filename'].tolist()
 
 
 if __name__ == '__main__':
