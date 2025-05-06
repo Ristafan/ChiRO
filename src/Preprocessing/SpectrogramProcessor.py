@@ -18,7 +18,8 @@ class SpectrogramProcessor:
         self.waveform = waveform
         self.sample_rate = sample_rate
         self.spectrogram = None
-        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = "cpu"  # Memory allocation issue
 
     def apply_highpass_filter(self, cutoff_freq=16000):
         """
