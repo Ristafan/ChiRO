@@ -5,6 +5,8 @@ import shutil as sh
 from collections import defaultdict
 from tqdm import tqdm
 
+from TrainingClasses import bat_species, eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species
+
 
 class SplitSet:
     def __init__(self, data_source_path, labels_path, data_target_path):
@@ -48,21 +50,20 @@ class SplitSet:
         self.class_labels = {row[filename_column]: row[label_column] for _, row in data.iterrows()}
         self.criteria_labels = {row[filename_column]: row[criterion_column] for _, row in data.iterrows()}
 
-    def merge_class_labels(self, to_merge):
-        self.original_labels = self.class_labels.copy()
+    def merge_class_labels(self, to_merge, merge_index=0):
         # Merge class labels based on the provided list
         for filename in self.filenames:
             if self.class_labels[filename] in to_merge:
-                self.class_labels[filename] = 'new_class'
+                self.class_labels[filename] = f'new_class_{str(merge_index)}'
 
-        # Update the classes list
+        # Update the TrainingClasses list
         self.classes = list(set(self.class_labels.values()))
 
-    def merge_criteria_labels(self, to_merge):
+    def merge_criteria_labels(self, to_merge, merge_index=0):
         # Merge criteria labels based on the provided list
         for filename in self.filenames:
             if self.criteria_labels[filename] in to_merge:
-                self.criteria_labels[filename] = 'new_criterion'
+                self.criteria_labels[filename] = f'new_criterion_{str(merge_index)}'
 
         # Update the criteria list
         self.criteria = list(set(self.criteria_labels.values()))
@@ -232,21 +233,28 @@ class SplitSet:
         self.val_set = []
         self.test_set = []
 
-        # Get the number of distinct classes and criteria
+        # Get the number of distinct TrainingClasses and criteria
         self.get_number_of_distinct_criteria()
 
         # Merge class labels or criteria if required
         if merge_labels is not None:
-            self.merge_class_labels(merge_labels)
+            self.original_labels = self.class_labels.copy()
+            for merge in merge_labels:
+                self.merge_class_labels(merge, merge[0].split(" ")[0])
+
         if merge_criteria is not None:
-            self.merge_criteria_labels(merge_criteria)
+            self.original_labels = self.criteria_labels.copy()
+            for merge in merge_criteria:
+                self.merge_criteria_labels(merge, merge[0].split(" ")[0])
 
         # Count files per class and criterion (for informational purposes)
         self.num_files_per_class = {label: sum(1 for filename in self.filenames if self.class_labels[filename] == label) for label in self.classes}
         self.num_files_per_criterion = {label: sum(1 for filename in self.filenames if self.criteria_labels[filename] == label) for label in self.criteria}
 
+        print()
         print("Available files per class:", self.num_files_per_class)
         print("Available files per criterion:", self.num_files_per_criterion)
+        print()
 
         # Combine labels and criteria into a single dictionary
         self.combine_labels_criteria()
@@ -258,7 +266,9 @@ class SplitSet:
             self.create_random_split()
 
         # Print final set sizes
+        print()
         print(f"Final set sizes - Train: {len(self.train_set)}, Val: {len(self.val_set)}, Test: {len(self.test_set)}")
+        print()
 
     def export_to_excel(self, output_dir):
         """
@@ -291,8 +301,9 @@ class SplitSet:
             train_data.append({
                 'Filename': filename,
                 'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV'),
-                'Class': self.class_labels[filename],
                 'Criterion': self.criteria_labels[filename],
+                'Class': self.class_labels[filename],
+                'original_class': self.original_labels[filename],
                 'label': class_num_labels[self.class_labels[filename]]
             })
 
@@ -301,8 +312,9 @@ class SplitSet:
             val_data.append({
                 'Filename': filename,
                 'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV'),
-                'Class': self.class_labels[filename],
                 'Criterion': self.criteria_labels[filename],
+                'Class': self.class_labels[filename],
+                'original_class': self.original_labels[filename],
                 'label': class_num_labels[self.class_labels[filename]]
             })
 
@@ -311,8 +323,9 @@ class SplitSet:
             test_data.append({
                 'Filename': filename,
                 'Filepath': os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV'),
-                'Class': self.class_labels[filename],
                 'Criterion': self.criteria_labels[filename],
+                'Class': self.class_labels[filename],
+                'original_class': self.original_labels[filename],
                 'label': class_num_labels[self.class_labels[filename]]
             })
 
@@ -430,44 +443,17 @@ class SplitSet:
 
 if __name__ == "__main__":
     # Example usage
-    bat_species = [
-        "Barbastella barbastellus",
-        "Chiroptera",
-        "Eptesicus nilssonii",
-        "Eptesicus serotinus",
-        "Hypsugo savii",
-        "Miniopterus schreibersii",
-        "Myotis bechsteinii or Myotis sp.",
-        "Myotis brandtii or Myotis mystacinus",
-        "Myotis capaccinii or Myotis daubentonii",
-        "Myotis daubentonii",
-        "Myotis daubentonii or Myotis capaccinii",
-        "Myotis emarginatus",
-        "Myotis myotis",
-        "Myotis nattereri",
-        "Myotis sp.",
-        "Nyctalus leisleri",
-        "Nyctalus noctula",
-        "Pipistrellus kuhlii",
-        "Pipistrellus kuhlii or Pipistrellus nathusii",
-        "Pipistrellus nathusii or Pipistrellus kuhlii",
-        "Pipistrellus nathusii",
-        "Pipistrellus pipistrellus",
-        "Pipistrellus pipistrellus or Pipistrellus kuhlii",
-        "Pipistrellus pygmaeus",
-        "Plecotus austriacus",
-        "Vespertilio murinus"
-    ]
+
 
     data_source_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequences"
     labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged.xlsx"
-    data_target_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha"
+    data_target_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataBeta"
 
     split_set = SplitSet(data_source_path, labels_path, data_target_path)
     split_set.read_data("File", "Verification 1", "location")
     split_set.select_split_method("balanced")
     split_set.select_split_ratio(0.7, 0.15, 0.15)
-    split_set.create_splits(2762, merge_labels=bat_species)
+    split_set.create_splits(50, merge_labels=[eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species])
     # split_set.move_files(data_target_path)
     split_set.export_to_excel(os.path.join(data_target_path, "dataset_info"))
 
