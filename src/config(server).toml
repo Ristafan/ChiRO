@@ -1,0 +1,13 @@
+[dataset]
+train_files_labels = "/local/scratch/faehnrich/Agroscope/Training/Alpha/dataset_info/train_dataset_info.xlsx"
+
+[example_data]
+train_files_labels = ""
+
+[spectrogram]
+spectrograms_dir = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/spectrograms"
+
+[model]
+alpha = "/home/user/faehnrich/ChiRO/data/DataAlpha/models/Alpha"
+beta = "/home/user/faehnrich/ChiRO/data/DataAlpha/models/Beta"
+gamma = "/home/user/faehnrich/ChiRO/data/DataAlpha/models/Gamma"
