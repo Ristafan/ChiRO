@@ -5,7 +5,7 @@ train_files_labels = "/local/scratch/faehnrich/Agroscope/Training/Alpha/dataset_
 train_files_labels = ""
 
 [spectrogram]
-spectrograms_dir = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/spectrograms"
+spectrograms_dir = "/local/scratch/faehnrich/Spectrograms"
 
 [model]
 alpha = "/home/user/faehnrich/ChiRO/data/DataAlpha/models/Alpha"
