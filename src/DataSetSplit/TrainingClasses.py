@@ -33,7 +33,7 @@ eptesicus_species = [
 ]
 
 myotis_species = [
-    "Myotis bechsteinii or Myotis sp",
+    "Myotis bechsteinii or Myotis sp.",
     "Myotis brandtii or Myotis mystacinus",
     "Myotis capaccinii or Myotis daubentonii",
     "Myotis daubentonii",
@@ -57,4 +57,11 @@ pipistrellus_species = [
     "Pipistrellus pipistrellus",
     "Pipistrellus pipistrellus or Pipistrellus kuhlii",
     "Pipistrellus pygmaeus"
+]
+
+Chiroptera_generally = [
+    "Chiroptera",
+    "Hypsugo savii",
+    "Plecotus austriacus",
+    "Barbastella barbastellus",
 ]
