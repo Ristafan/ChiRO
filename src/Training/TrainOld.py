@@ -12,7 +12,7 @@ from src.Preprocessing.LabelsLoader import LabelsLoader
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
 from src.Preprocessing.SpectrogramLoader import SpectrogramLoader
 from src.Architectures.AlphaV2 import AlphaV2
-from src.Preprocessing.BatCallDataSet import BatCallDataset
+from src.Preprocessing.BatCallDataset import BatCallDataset
 
 
 def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):

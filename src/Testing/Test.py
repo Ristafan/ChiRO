@@ -6,7 +6,7 @@ from src.Logging.Logger import Logger
 import torch
 
 from src.Preprocessing.AudioLoader import AudioLoader
-from src.Preprocessing.BatCallDataSet import BatCallDataset
+from src.Preprocessing.BatCallDataset import BatCallDataset
 from src.Preprocessing.LabelsLoader import LabelsLoader
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
 

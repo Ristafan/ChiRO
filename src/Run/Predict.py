@@ -55,8 +55,8 @@ class Predictor():
 
     def predict_folder(self):
         """
-        Predicts the classes of all audio files in a folder.
-        :return: List of predicted classes.
+        Predicts the TrainingClasses of all audio files in a folder.
+        :return: List of predicted TrainingClasses.
         """
         predictions = []
         for filename in os.listdir(self.data_path):
@@ -76,4 +76,4 @@ if __name__ == "__main__":
     print(f"Predicted class: {prediction}")
 
     predictions = predictor.predict_folder()
-    print(f"Predicted classes: {predictions}")
+    print(f"Predicted TrainingClasses: {predictions}")
