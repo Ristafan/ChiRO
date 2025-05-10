@@ -5,7 +5,7 @@ import shutil as sh
 from collections import defaultdict
 from tqdm import tqdm
 
-from TrainingClasses import bat_species, eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species
+from TrainingClasses import bat_species, eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally
 
 
 class SplitSet:
@@ -14,6 +14,7 @@ class SplitSet:
         self.data_target_path = data_target_path
         self.labels_path = labels_path
 
+        self.total_files = 0
         self.filenames = []
         self.classes = []
         self.criteria = []
@@ -115,6 +116,7 @@ class SplitSet:
                 files_added += to_select
 
         # If we need more files, take them from any available criterion
+        # TODO: Fix this part so that not all files are selected from the wholes set
         remaining = num_files - files_added
         if remaining > 0:
             # Update available criteria
@@ -142,9 +144,9 @@ class SplitSet:
         and files are evenly distributed across criteria when possible.
         """
         # Calculate how many files to select per class based on the split ratios
-        train_files_per_class = int(self.files_per_class * self.split_ratio[0])
-        val_files_per_class = int(self.files_per_class * self.split_ratio[1])
-        test_files_per_class = self.files_per_class - train_files_per_class - val_files_per_class
+        train_files_per_class = int(self.total_files * self.split_ratio[0])
+        val_files_per_class = int(self.total_files * self.split_ratio[1])
+        test_files_per_class = self.total_files - train_files_per_class - val_files_per_class
 
         print(f"Files per class - Train: {train_files_per_class}, Val: {val_files_per_class}, Test: {test_files_per_class}")
 
@@ -161,10 +163,8 @@ class SplitSet:
             # Calculate total files in this class
             total_files_in_class = sum(len(files) for files in files_by_criterion.values())
 
-            if total_files_in_class < self.files_per_class:
-                print(f"Warning: Class {cl} has fewer files ({total_files_in_class}) than requested ({self.files_per_class}).")
-                print("IF THIS WARNING APPEARS, PLEASE CHECK THE CLASS LABELS IN THE EXCEL FILE.")
-                continue
+            if total_files_in_class < self.total_files // len(self.combined_labels.keys()):
+                print(f"Warning: Class {cl} has fewer files ({total_files_in_class}) than requested ({self.total_files // len(self.combined_labels.keys())}).")
 
             # Add files to train set
             self._add_files_balanced(cl, files_by_criterion, available_criteria, train_files_per_class, self.train_set)
@@ -181,15 +181,15 @@ class SplitSet:
             # Add files to test set (only if test_files_per_class > 0)
             self._add_files_balanced(cl, files_by_criterion, available_criteria, test_files_per_class, self.test_set)
 
-    def create_random_split(self):
+    def create_random_split(self):  # This method contains errors
         """
         Create a random split where each class has exactly the specified number of files,
         with files selected randomly regardless of criterion.
         """
         # Calculate how many files to select per class based on the split ratios
-        train_files_per_class = int(self.files_per_class * self.split_ratio[0])
-        val_files_per_class = int(self.files_per_class * self.split_ratio[1])
-        test_files_per_class = self.files_per_class - train_files_per_class - val_files_per_class
+        train_files_per_class = int(self.total_files * self.split_ratio[0])
+        val_files_per_class = int(self.total_files * self.split_ratio[1])
+        test_files_per_class = self.total_files - train_files_per_class - val_files_per_class
 
         print(f"Files per class - Train: {train_files_per_class}, Val: {val_files_per_class}, Test: {test_files_per_class}")
 
@@ -200,8 +200,8 @@ class SplitSet:
             for cr in self.criteria:
                 all_files.extend(self.combined_labels[cl][cr])
 
-            if len(all_files) < self.files_per_class:
-                print(f"Warning: Class {cl} has fewer files ({len(all_files)}) than requested ({self.files_per_class}).")
+            if len(all_files) < self.total_files:
+                print(f"Warning: Class {cl} has fewer files ({len(all_files)}) than requested ({self.total_files}).")
                 continue
 
             # Shuffle the files
@@ -224,9 +224,9 @@ class SplitSet:
             if test_files_per_class > 0:
                 self.test_set.extend(all_files[current_index:current_index + test_files_per_class])
 
-    def create_splits(self, files_per_class, merge_labels=None, merge_criteria=None):
-        # Store the files_per_class parameter
-        self.files_per_class = files_per_class
+    def create_splits(self, total_files, merge_labels=None, merge_criteria=None):
+        # Store the total_files parameter
+        self.total_files = total_files
 
         # Clear any existing splits
         self.train_set = []
@@ -347,118 +347,16 @@ class SplitSet:
         print(f"Validation set information exported to {val_path}")
         print(f"Test set information exported to {test_path}")
 
-    def move_files(self, target_path):
-        # Check if target path exists, if not create it
-        if not os.path.exists(target_path):
-            os.makedirs(target_path)
-
-        # Move files to the target path
-        for filename in tqdm(self.train_set, desc="Moving train files"):
-            source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV')
-            target = os.path.join(target_path, "train", f'{filename}.WAV')
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            sh.copyfile(source, target)
-
-        for filename in tqdm(self.val_set, desc="Moving val files"):
-            source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV')
-            target = os.path.join(target_path, "val", f'{filename}.WAV')
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            sh.copyfile(source, target)
-
-        for filename in tqdm(self.test_set, desc="Moving test files"):
-            source = os.path.join(self.data_source_path, self.original_labels[filename], f'{filename}.WAV')
-            target = os.path.join(target_path, "test", f'{filename}.WAV')
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            sh.copyfile(source, target)
-
-    def count_files_in_folder(self, folder_path):
-        """
-        Count files in a folder grouped by class and criterion.
-
-        Args:
-            folder_path: Path to the folder containing files to count
-
-        Returns:
-            Prints the count of files by class and criterion
-        """
-        # Check if the folder exists
-        if not os.path.exists(folder_path):
-            print(f"Error: Folder {folder_path} does not exist")
-            return
-
-        # Initialize counters
-        class_counts = defaultdict(int)
-        criterion_counts = defaultdict(int)
-        class_criterion_counts = defaultdict(lambda: defaultdict(int))
-
-        # Get files in the folder
-        files = []
-        for root, _, filenames in os.walk(folder_path):
-            for filename in filenames:
-                if filename.endswith('.WAV'):
-                    # Extract just the filename without extension
-                    base_name = os.path.splitext(filename)[0]
-                    files.append(base_name)
-
-        # Count files by class and criterion
-        for filename in files:
-            if filename in self.class_labels:
-                class_label = self.class_labels[filename]
-                class_counts[class_label] += 1
-
-                if filename in self.criteria_labels:
-                    criterion_label = self.criteria_labels[filename]
-                    criterion_counts[criterion_label] += 1
-                    class_criterion_counts[class_label][criterion_label] += 1
-
-        # Print results
-        print(f"\nFile counts in {folder_path}:")
-        print("=" * 50)
-
-        print("\nCounts by Class:")
-        print("-" * 50)
-        for cls, count in sorted(class_counts.items()):
-            print(f"{cls}: {count} files")
-
-        print("\nCounts by Criterion:")
-        print("-" * 50)
-        for criterion, count in sorted(criterion_counts.items()):
-            print(f"{criterion}: {count} files")
-
-        print("\nCounts by Class and Criterion:")
-        print("-" * 50)
-        for cls in sorted(class_criterion_counts.keys()):
-            print(f"\nClass: {cls}")
-            for criterion, count in sorted(class_criterion_counts[cls].items()):
-                print(f"  - {criterion}: {count} files")
-
-        print("\nTotal files:", len(files))
-        return {
-            "class_counts": dict(class_counts),
-            "criterion_counts": dict(criterion_counts),
-            "class_criterion_counts": {k: dict(v) for k, v in class_criterion_counts.items()},
-            "total": len(files)
-        }
-
 
 if __name__ == "__main__":
     # Example usage
-
-
     data_source_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequences"
     labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged.xlsx"
-    data_target_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataBeta"
+    data_target_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlphaBeta"
 
     split_set = SplitSet(data_source_path, labels_path, data_target_path)
     split_set.read_data("File", "Verification 1", "location")
     split_set.select_split_method("balanced")
     split_set.select_split_ratio(0.7, 0.15, 0.15)
-    split_set.create_splits(50, merge_labels=[eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species])
-    # split_set.move_files(data_target_path)
+    split_set.create_splits(20, merge_labels=[eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally],)
     split_set.export_to_excel(os.path.join(data_target_path, "dataset_info"))
-
-    # Count files in the train, validation, and test folders
-    # print("\nCounting files in the target folders:")
-    # split_set.count_files_in_folder(os.path.join(data_target_path, "train"))
-    # split_set.count_files_in_folder(os.path.join(data_target_path, "val"))
-    # split_set.count_files_in_folder(os.path.join(data_target_path, "test"))
