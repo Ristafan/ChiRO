@@ -20,6 +20,7 @@ class SplitSet:
         self.original_criteria_labels = {}
         self.combined_labels_criteria = defaultdict(lambda: defaultdict(list))
         self.class_to_numeric_label = {}
+        self.ignored_labels = set()
 
         self.split_method = "balanced"  # Default to balanced
         self.split_ratio = [0.8, 0.2, 0]
@@ -28,6 +29,13 @@ class SplitSet:
         self.train_set = []
         self.val_set = []
         self.test_set = []
+
+    def set_ignored_labels(self, labels_to_ignore):
+        """Sets a list of labels to be ignored during data loading."""
+        if isinstance(labels_to_ignore, list):
+            self.ignored_labels.update(labels_to_ignore)
+        else:
+            print("Warning: Input for set_ignored_labels should be a list.")
 
     def select_split_method(self, split_method):
         if split_method not in ["random", "balanced"]:
@@ -46,9 +54,22 @@ class SplitSet:
 
     def read_data(self, filename_column, label_column, criterion_column):
         data = pd.read_excel(self.labels_path)
-        self.filenames = data[filename_column].tolist()
-        self.class_labels = {row[filename_column]: row[label_column] for _, row in data.iterrows()}
-        self.criteria_labels = {row[filename_column]: row[criterion_column] for _, row in data.iterrows()}
+        temp_filenames = []
+        temp_class_labels = {}
+        temp_criteria_labels = {}
+
+        for _, row in data.iterrows():
+            filename = row[filename_column]
+            label = row[label_column]
+            criterion = row[criterion_column]
+            if label not in self.ignored_labels:
+                temp_filenames.append(filename)
+                temp_class_labels[filename] = label
+                temp_criteria_labels[filename] = criterion
+
+        self.filenames = temp_filenames
+        self.class_labels = temp_class_labels
+        self.criteria_labels = temp_criteria_labels
         self.original_class_labels = self.class_labels.copy()
         self.original_criteria_labels = self.criteria_labels.copy()
 
@@ -176,18 +197,18 @@ if __name__ == "__main__":
     # Example usage
     data_source_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequences"
     labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged.xlsx"
-    data_target_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlphaBeta"
+    data_target_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataBeta"
 
     # Server paths
-    data_source_path = "/local/scratch/faehnrich/AgroscopeData/LabelledSequences"
-    labels_path = "/local/scratch/faehnrich/AgroscopeData/LabelledSequencesMerged.xlsx"
-    data_target_path = "/local/scratch/faehnrich/AgroscopeData/Training/DataAlphaBeta"
+    #data_source_path = "/local/scratch/faehnrich/AgroscopeData/LabelledSequences"
+    #labels_path = "/local/scratch/faehnrich/AgroscopeData/LabelledSequencesMerged.xlsx"
+    #data_target_path = "/local/scratch/faehnrich/AgroscopeData/Training/DataAlphaBeta"
 
     split_set = SplitSet(data_source_path, labels_path, data_target_path)
+    split_set.set_ignored_labels(["Env sounds"])
     split_set.read_data("File", "Verification 1", "location")
     split_set.select_split_method("balanced")
     split_set.select_split_ratio(0.7, 0.15, 0.15)
-    split_set.select_split_seed(42)  # For reproducibility
 
     # Example 1: Using minimum files per class
     split_set.create_splits(use_min_files_per_class=True, merge_labels=[eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally])
