@@ -38,6 +38,10 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
     # Enable mixed precision training
     scaler = torch.cuda.amp.GradScaler()
 
+    # Initialize lists to store statistics for the entire dataset
+    all_means = []
+    all_stds = []
+
     # Use the combined loss function
     def criterion(output_alpha, target_alpha, output_beta, target_beta):
         """Wrapper for the combined_loss function"""
@@ -68,6 +72,15 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
             labels_beta = labels[:, 1].to(device)  # Genus labels
             # Convert to half precision to save memory
             spectrograms = spectrograms.half()
+
+            # Calculate and print batch statistics
+            batch_mean = spectrograms.mean()
+            batch_std = spectrograms.std()
+            print(f"Batch {batch_idx+1}: Mean = {batch_mean.item():.4f}, Std = {batch_std.item():.4f}")
+
+            # Store batch statistics for the entire dataset
+            all_means.append(batch_mean.item())
+            all_stds.append(batch_std.item())
 
             optimizer.zero_grad()
 
@@ -120,6 +133,11 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
             "train_acc_beta": train_acc_beta,
             "learning_rate": optimizer.param_groups[0]['lr']
         })
+
+    # Calculate and print statistics for the entire dataset
+    dataset_mean = sum(all_means) / len(all_means)
+    dataset_std = (sum((x - dataset_mean) ** 2 for x in all_stds) / (len(all_stds) - 1)) ** 0.5 if len(all_stds) > 1 else 0
+    print(f"Dataset: Mean = {dataset_mean:.4f}, Std = {dataset_std:.4f}")
 
     print("Training complete!")
     return model
@@ -201,7 +219,6 @@ def collate_fn(batch):
             alpha_label = 1
         labels_alpha.append(alpha_label)
         labels_beta.append(label_value)
-
 
     # Find max time length
     max_len = max(spec.shape[-1] for spec in spectrograms)
