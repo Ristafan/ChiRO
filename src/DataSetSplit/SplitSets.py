@@ -1,7 +1,6 @@
 import pandas as pd
 import os
 import random as rd
-import shutil as sh
 from collections import defaultdict
 from tqdm import tqdm
 
@@ -20,6 +19,7 @@ class SplitSet:
         self.original_class_labels = {}
         self.original_criteria_labels = {}
         self.combined_labels_criteria = defaultdict(lambda: defaultdict(list))
+        self.class_to_numeric_label = {}
 
         self.split_method = "balanced"  # Default to balanced
         self.split_ratio = [0.8, 0.2, 0]
@@ -30,7 +30,6 @@ class SplitSet:
         self.test_set = []
 
     def select_split_method(self, split_method):
-        # Methods include "random", "balanced"
         if split_method not in ["random", "balanced"]:
             raise ValueError("Invalid split method. Choose from 'random' or 'balanced'.")
         self.split_method = split_method
@@ -64,15 +63,17 @@ class SplitSet:
                 self.criteria_labels[filename] = new_label
 
     def _prepare_data_for_splitting(self):
-        """Groups filenames by their class and criterion."""
         self.combined_labels_criteria.clear()
         for filename in self.filenames:
             class_label = self.class_labels[filename]
             criterion_label = self.criteria_labels[filename]
             self.combined_labels_criteria[class_label][criterion_label].append(filename)
 
+        # Create numeric labels for each class
+        unique_classes = sorted(self.combined_labels_criteria.keys())
+        self.class_to_numeric_label = {label: i for i, label in enumerate(unique_classes)}
+
     def _split_data_by_ratio(self, data_list, ratios, shuffle=True):
-        """Splits a list into parts based on the given ratios."""
         if shuffle:
             rd.shuffle(data_list)
         n = len(data_list)
@@ -83,7 +84,7 @@ class SplitSet:
         test_set = data_list[val_idx:]
         return train_set, val_set, test_set
 
-    def create_splits(self, total_files_per_class=None, merge_labels=None, merge_criteria=None):
+    def create_splits(self, total_files_per_class=None, use_min_files_per_class=False, merge_labels=None, merge_criteria=None):
         if self.split_seed is not None:
             rd.seed(self.split_seed)
 
@@ -99,6 +100,21 @@ class SplitSet:
 
         self._prepare_data_for_splitting()
 
+        class_file_counts = {
+            class_label: sum(len(files) for files in criteria_dict.values())
+            for class_label, criteria_dict in self.combined_labels_criteria.items()
+        }
+
+        target_files_per_class = total_files_per_class
+        if use_min_files_per_class:
+            min_count = min(class_file_counts.values()) if class_file_counts else 0
+            target_files_per_class = min_count
+            print(f"Using a maximum of {target_files_per_class} files per class based on the smallest class.")
+        elif total_files_per_class is not None:
+            for class_label, count in class_file_counts.items():
+                if count < total_files_per_class:
+                    print(f"Warning: Class '{class_label}' has only {count} files, which is less than the target of {total_files_per_class}.")
+
         all_train_files = []
         all_val_files = []
         all_test_files = []
@@ -112,10 +128,12 @@ class SplitSet:
                 print(f"Warning: No files found for class '{class_label}'.")
                 continue
 
-            if total_files_per_class is not None:
-                num_files_to_select = min(total_files_per_class, len(class_files))
-                if len(class_files) > num_files_to_select:
-                    class_files = rd.sample(class_files, num_files_to_select)
+            num_files_to_select = len(class_files)
+            if target_files_per_class is not None:
+                num_files_to_select = min(target_files_per_class, len(class_files))
+
+            if num_files_to_select < len(class_files):
+                class_files = rd.sample(class_files, num_files_to_select)
 
             train_files, val_files, test_files = self._split_data_by_ratio(class_files, self.split_ratio)
 
@@ -130,10 +148,6 @@ class SplitSet:
         print(f"\nFinal set sizes - Train: {len(self.train_set)}, Val: {len(self.val_set)}, Test: {len(self.test_set)}")
 
     def export_to_excel(self, output_dir):
-        """
-        Export dataset information to three separate Excel files (train, val, test),
-        each with relevant columns.
-        """
         os.makedirs(output_dir, exist_ok=True)
 
         def _create_dataframe(file_list, set_name):
@@ -145,6 +159,7 @@ class SplitSet:
                     'Criterion': self.criteria_labels.get(filename, 'unknown'),
                     'Class': self.class_labels.get(filename, 'unknown'),
                     'original_class': self.original_class_labels.get(filename, 'unknown'),
+                    'label': self.class_to_numeric_label.get(self.class_labels.get(filename, 'unknown'), -1) # -1 for unknown
                 })
             df = pd.DataFrame(data)
             filepath = os.path.join(output_dir, f"{set_name}_dataset_info.xlsx")
@@ -163,10 +178,26 @@ if __name__ == "__main__":
     labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged.xlsx"
     data_target_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlphaBeta"
 
+    # Server paths
+    data_source_path = "/local/scratch/faehnrich/AgroscopeData/LabelledSequences"
+    labels_path = "/local/scratch/faehnrich/AgroscopeData/LabelledSequencesMerged.xlsx"
+    data_target_path = "/local/scratch/faehnrich/AgroscopeData/Training/DataAlphaBeta"
+
     split_set = SplitSet(data_source_path, labels_path, data_target_path)
     split_set.read_data("File", "Verification 1", "location")
     split_set.select_split_method("balanced")
     split_set.select_split_ratio(0.7, 0.15, 0.15)
     split_set.select_split_seed(42)  # For reproducibility
-    split_set.create_splits(total_files_per_class=15000, merge_labels=[eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally])
-    split_set.export_to_excel(os.path.join(data_target_path, "dataset_info"))
+
+    # Example 1: Using minimum files per class
+    split_set.create_splits(use_min_files_per_class=True, merge_labels=[eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally])
+    split_set.export_to_excel(os.path.join(data_target_path, "dataset_info_min"))
+
+    # Example 2: Setting a target number of files per class
+    # split_set_target = SplitSet(data_source_path, labels_path, data_target_path)
+    # split_set_target.read_data("File", "Verification 1", "location")
+    # split_set_target.select_split_method("balanced")
+    # split_set_target.select_split_ratio(0.7, 0.15, 0.15)
+    # split_set_target.select_split_seed(42)  # For reproducibility
+    # split_set_target.create_splits(total_files_per_class=1000, merge_labels=[eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally])
+    # split_set_target.export_to_excel(os.path.join(data_target_path, "dataset_info_target"))
