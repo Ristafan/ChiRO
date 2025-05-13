@@ -1,3 +1,5 @@
+import math
+
 from torch import nn
 from tqdm import tqdm
 import os
@@ -125,18 +127,47 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
 
 def combined_loss(output_alpha, target_alpha, output_beta, target_beta, noise_label):
     """
-    Calculates the combined loss for the AlphaBeta model.
+    Calculates the combined loss for the AlphaBeta model, dynamically
+    adjusting based on whether the input is a bat call or noise, and
+    incorporating beta prediction probability into alpha loss for bat calls.
 
     Args:
         output_alpha (torch.Tensor): Output from head_alpha (shape: [batch_size, 2]).
         target_alpha (torch.Tensor): Ground truth labels for bat call/noise (shape: [batch_size]).
         output_beta (torch.Tensor): Output from head_beta (shape: [batch_size, num_genera]).
         target_beta (torch.Tensor): Ground truth labels for genus (shape: [batch_size]).
-        noise_label (int):  The label ID for noise/environment sounds.
+        noise_label (int): The label ID for noise/environment sounds.
 
     Returns:
         torch.Tensor: The combined loss (scalar).
     """
+    # Binary cross-entropy loss for head alpha
+    loss_alpha = F.cross_entropy(output_alpha, target_alpha, reduction='none')  # Get per-sample losses
+
+    # Cross-entropy loss for head beta, applied only when target_alpha is not the noise_label
+    bat_mask = (target_alpha != noise_label)
+    if bat_mask.any():
+        loss_beta = F.cross_entropy(output_beta[bat_mask], target_beta[bat_mask])
+
+        # Get probabilities of beta predictions for bat calls
+        beta_probs = F.softmax(output_beta[bat_mask], dim=1)  # shape: [num_bat_calls, num_genera]
+        # Get the probabilities of the correct genus
+        correct_beta_probs = beta_probs.gather(dim=1, index=target_beta[bat_mask].unsqueeze(1)).squeeze(1)
+
+        # Incorporate beta probabilities into alpha loss for bat calls
+        modified_alpha_loss = loss_alpha.clone()  # avoid modifying original
+        modified_alpha_loss[bat_mask] = - target_alpha[bat_mask].float() * torch.log(correct_beta_probs) # changed the formula
+
+        combined_loss = modified_alpha_loss.mean() + loss_beta
+
+    else:
+        combined_loss = loss_alpha.mean()  # Only include alpha loss for noise
+
+    return combined_loss
+
+
+"""
+def combined_loss(output_alpha, target_alpha, output_beta, target_beta, noise_label):
     # Binary cross-entropy loss for head alpha
     loss_alpha = F.cross_entropy(output_alpha, target_alpha)
 
@@ -148,10 +179,11 @@ def combined_loss(output_alpha, target_alpha, output_beta, target_beta, noise_la
         loss_beta = torch.tensor(0.0, device=output_alpha.device)
 
     # Combine the losses
-    combined_loss = loss_alpha + loss_beta
+    # combined_loss = loss_alpha + loss_beta
+    combined_loss = loss_alpha + loss_beta * math.log(2)  # Adjust the weight of loss_beta
 
     return combined_loss
-
+"""
 
 def collate_fn(batch):
     import torch.nn.functional as F
@@ -185,13 +217,12 @@ def collate_fn(batch):
     return spectrograms, labels
 
 
-
 if __name__ == '__main__':
     # Load configuration paths
     config = load_config()
 
     # Set up paths
-    spectrogram_already_computed = True
+    spectrogram_already_computed = False
     example_data = False
 
     # Paths for example data
@@ -216,7 +247,7 @@ if __name__ == '__main__':
             "num_epochs": 4,
             "batch_size": 8,
             "model": "AlphaBetaV1",
-            "model_name": f"alphaBeta_{datetime.now().strftime("%H-%M-%S")}.pth",
+            "model_name": f"alphaBeta_{datetime.now().strftime('%H-%M-%S')}.pth",
             "noise_label": 7,  # Add noise_label to config
             "generic_bat_label": 6, # Add generic bat label to config
         },
