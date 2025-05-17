@@ -8,36 +8,30 @@ from tqdm import tqdm
 
 
 class SpectrogramProcessor:
-    def __init__(self, waveform, sample_rate=192000, device=None):
+    def __init__(self, waveform, sample_rate=192000):
         """
         Initialize with a waveform tensor.
         :param waveform: Tensor of shape (channels, time)
         :param sample_rate: Sample rate of the waveform (default: 96kHz)
-        :param device: The torch device to use ('cuda' or 'cpu'). Defaults to CUDA if available.
         """
         self.waveform = waveform
         self.sample_rate = sample_rate
         self.spectrogram = None
-        # self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.device = "cpu"  # Memory allocation issue
 
     def apply_highpass_filter(self, cutoff_freq=16000):
         """
         Applies a high-pass filter to remove frequencies below 16 kHz.
         Useful for isolating bat echolocation calls.
         """
-        self.waveform = F.highpass_biquad(self.waveform.to(self.device), sample_rate=self.sample_rate, cutoff_freq=cutoff_freq).cpu()
+        self.waveform = F.highpass_biquad(self.waveform, sample_rate=self.sample_rate, cutoff_freq=cutoff_freq).cpu()
 
     def compute_spectrogram(self, n_fft=4096, hop_length=None, win_length=2048):
         """
         Computes a high-resolution spectrogram optimized for bat echolocation calls.
-        Moves the transform to the device only when needed and keeps the result on CPU.
         Reduced default n_fft and win_length.
         """
-        transform = T.Spectrogram(n_fft=n_fft, win_length=win_length, hop_length=hop_length, power=2.0).to(self.device)
-        waveform_gpu = self.waveform.to(self.device)
-        spectrogram_gpu = transform(waveform_gpu)
-        self.spectrogram = spectrogram_gpu.cpu()
+        transform = T.Spectrogram(n_fft=n_fft, win_length=win_length, hop_length=hop_length, power=2.0)
+        self.spectrogram = transform(self.waveform)
         return self.spectrogram
 
     def compute_mel_spectrogram(self, n_mels=256, n_fft=1024, hop_length=256, win_length=1024):
@@ -55,10 +49,9 @@ class SpectrogramProcessor:
             mel_scale="htk",
             f_min=0,
             f_max=self.sample_rate // 2  # Use Nyquist frequency (48 kHz for 96 kHz recordings)
-        ).to(self.device)
+        )
 
-        waveform_gpu = self.waveform.to(self.device)
-        spectrogram_gpu = transform(waveform_gpu)
+        spectrogram_gpu = transform(self.waveform)
         self.spectrogram = spectrogram_gpu.cpu()
         return self.spectrogram
 
@@ -124,15 +117,13 @@ class SpectrogramProcessor:
 
 
 if __name__ == '__main__':
-    dt = AudioLoader()
-    dt.load_audio_from_exel('C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/dataset_info/train_dataset_info.xlsx')
-    waveforms = dt.get_data()
+    waveform, sample_rate = AudioLoader().load_wav_file('C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train/20210712_233400T #0001_3f259123805e9cfb6706af0899348593.wav')
 
-    s = SpectrogramProcessor(waveforms[3])
+    s = SpectrogramProcessor(waveform)
     s.apply_highpass_filter()
     s.compute_spectrogram()
     print(s.spectrogram.shape)
-    s.denoise_spectrogram()
+    #s.denoise_spectrogram()
     s.plot_new()
 
 #    for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):

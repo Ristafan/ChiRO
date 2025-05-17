@@ -8,8 +8,11 @@ from torch.utils.data import DataLoader
 import torch
 from torch.nn import functional as F
 from datetime import datetime
+
+from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, \
+    Chiroptera_generally
 from src.Preprocessing.AudioLoader import AudioLoader
-from src.Preprocessing.LabelsLoader import LabelsLoader
+from src.Preprocessing.Preprocessor import Preprocessor
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
 from src.Architectures.AlphaBetaV1 import AlphaBetaV1
 from src.Preprocessing.BatCallDataset import BatCallDataset
@@ -35,9 +38,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    # Enable mixed precision training
-    scaler = torch.cuda.amp.GradScaler()
-
     # Initialize lists to store statistics for the entire dataset
     all_means = []
     all_stds = []
@@ -59,9 +59,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
         total_alpha = 0
         correct_beta = 0
         total_beta = 0
-
-        # Clear cache before each epoch
-        torch.cuda.empty_cache()
 
         # Add progress bar for each epoch
         train_pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Train]")
@@ -85,14 +82,11 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
             optimizer.zero_grad()
 
             # Use automatic mixed precision
-            with torch.cuda.amp.autocast():
-                outputs_alpha, outputs_beta = model(spectrograms)
-                loss = criterion(outputs_alpha, labels_alpha, outputs_beta, labels_beta)
+            outputs_alpha, outputs_beta = model(spectrograms)
+            loss = criterion(outputs_alpha, labels_alpha, outputs_beta, labels_beta)
 
-            # Scale gradients and perform backward pass
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            # Perform backward pass
+            loss.backward()
 
             running_loss += loss.item()
 
@@ -114,10 +108,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
                 'acc_alpha': 100 * correct_alpha / total_alpha,
                 'acc_beta': 100 * correct_beta / total_beta if total_beta > 0 else 0,
             })
-
-            # Clear memory every few batches if needed
-            if batch_idx % 50 == 0:
-                torch.cuda.empty_cache()
 
         train_loss = running_loss / len(train_loader)
         train_acc_alpha = 100 * correct_alpha / total_alpha
@@ -144,48 +134,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
 
 
 def combined_loss(output_alpha, target_alpha, output_beta, target_beta, noise_label):
-    """
-    Calculates the combined loss for the AlphaBeta model, dynamically
-    adjusting based on whether the input is a bat call or noise, and
-    incorporating beta prediction probability into alpha loss for bat calls.
-
-    Args:
-        output_alpha (torch.Tensor): Output from head_alpha (shape: [batch_size, 2]).
-        target_alpha (torch.Tensor): Ground truth labels for bat call/noise (shape: [batch_size]).
-        output_beta (torch.Tensor): Output from head_beta (shape: [batch_size, num_genera]).
-        target_beta (torch.Tensor): Ground truth labels for genus (shape: [batch_size]).
-        noise_label (int): The label ID for noise/environment sounds.
-
-    Returns:
-        torch.Tensor: The combined loss (scalar).
-    """
-    # Binary cross-entropy loss for head alpha
-    loss_alpha = F.cross_entropy(output_alpha, target_alpha, reduction='none')  # Get per-sample losses
-
-    # Cross-entropy loss for head beta, applied only when target_alpha is not the noise_label
-    bat_mask = (target_alpha != noise_label)
-    if bat_mask.any():
-        loss_beta = F.cross_entropy(output_beta[bat_mask], target_beta[bat_mask])
-
-        # Get probabilities of beta predictions for bat calls
-        beta_probs = F.softmax(output_beta[bat_mask], dim=1)  # shape: [num_bat_calls, num_genera]
-        # Get the probabilities of the correct genus
-        correct_beta_probs = beta_probs.gather(dim=1, index=target_beta[bat_mask].unsqueeze(1)).squeeze(1)
-
-        # Incorporate beta probabilities into alpha loss for bat calls
-        modified_alpha_loss = loss_alpha.clone()  # avoid modifying original
-        modified_alpha_loss[bat_mask] = - target_alpha[bat_mask].float() * torch.log(correct_beta_probs) # changed the formula
-
-        combined_loss = modified_alpha_loss.mean() + loss_beta
-
-    else:
-        combined_loss = loss_alpha.mean()  # Only include alpha loss for noise
-
-    return combined_loss
-
-
-"""
-def combined_loss(output_alpha, target_alpha, output_beta, target_beta, noise_label):
     # Binary cross-entropy loss for head alpha
     loss_alpha = F.cross_entropy(output_alpha, target_alpha)
 
@@ -201,7 +149,7 @@ def combined_loss(output_alpha, target_alpha, output_beta, target_beta, noise_la
     combined_loss = loss_alpha + loss_beta * math.log(2)  # Adjust the weight of loss_beta
 
     return combined_loss
-"""
+
 
 def collate_fn(batch):
     import torch.nn.functional as F
@@ -235,21 +183,16 @@ def collate_fn(batch):
 
 
 if __name__ == '__main__':
+    # Define whether spectrograms are already computed
+    spectrogram_already_computed = False
+
     # Load configuration paths
     config = load_config()
-
-    # Set up paths
-    spectrogram_already_computed = False
-    example_data = False
-
-    # Paths for example data
-    files_path = config['example_data']['train_files_labels']
+    train_files_and_labels_path = config['dataset']['train_files_and_labels_path']
+    original_files_and_labels_path = config['dataset']['original_files_and_labels_path']
+    root_files_path = config['dataset']['files_path_root']
     spectrograms_path = config['spectrogram']['spectrograms_dir']
     model_path = config['model']['alpha_beta']
-
-    if not example_data:
-        files_path = config['dataset']['train_files_labels']
-        spectrograms_path = config['spectrogram']['spectrograms_dir']
 
     wandb.login(key="32b08e4c860b935b2cd9c30774889b952ffefe0d")
 
@@ -271,30 +214,27 @@ if __name__ == '__main__':
     )
 
     wb_config = wandb.config
+
     noise_label = wb_config.noise_label # Get the noise label from config
     generic_bat_label = wb_config.generic_bat_label # Get the generic bat label.
 
+    # Load Audio Files, Labels and create spectrograms
+    preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
+    preprocessor.create_data_splits(original_files_and_labels_path,
+                                    use_min_files_per_class=True,
+                                    total_files_per_class=100,
+                                    ignored_labels=["Env sounds"],
+                                    merge_labels=[eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally],
+                                    split_method="balanced",
+                                    train_ratio=0.7,
+                                    test_ratio=0.2,
+                                    seed=42)
+
     if not spectrogram_already_computed:
-        # Load Audio Files and create spectrograms
-        audio_loader = AudioLoader()
-        audio_loader.load_audio_from_exel(files_path)
-        waveforms = audio_loader.get_data()
-        names = audio_loader.get_file_names_from_excel(files_path)
+        preprocessor.create_spectrograms()
 
-        # Create Spectrograms
-        for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
-            sp = SpectrogramProcessor(waveforms[i])
-            sp.apply_highpass_filter()
-            sp.compute_spectrogram()
-            sp.denoise_spectrogram()
-            sp.save_spectrogram(f'{names[i]}', spectrograms_path + '/')
+    train_dataset = preprocessor.create_bat_call_dataset()
 
-    # Load training labels from Excel
-    labels_loader = LabelsLoader(files_path, filename_column="Filename", text_column="label")
-    labels_loader.load_labels_excel()
-
-    # Create training Dataset & DataLoader
-    train_dataset = BatCallDataset(spectrograms_path, labels_loader)
     train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size,
                               shuffle=True, collate_fn=collate_fn, num_workers=2)
 

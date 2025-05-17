@@ -1,13 +1,13 @@
 [dataset]
-train_files_labels = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/dataset_info/train_dataset_info.xlsx"
-
-[example_data]
-train_files_labels = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train"
+files_path_root = "D:/Bachelorarbeit/AgroscopeData/LabelledSequences"
+train_files_and_labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataBeta/dataset_info_min/train_dataset_info.xlsx"
+original_files_and_labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged.xlsx"
 
 [spectrogram]
 spectrograms_dir = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/spectrograms"
 
 [model]
-alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/models/Alpha"
-beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/models/Beta"
-gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataAlpha/models/Gamma"
+alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Alpha"
+alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/AlphaBeta"
+beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Beta"
+gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Gamma"

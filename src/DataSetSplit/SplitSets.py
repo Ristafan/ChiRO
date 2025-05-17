@@ -4,13 +4,12 @@ import random as rd
 from collections import defaultdict
 from tqdm import tqdm
 
-from TrainingClasses import bat_species, eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally
+from src.DataSetSplit.TrainingClasses import bat_species, eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally
 
 
 class SplitSet:
-    def __init__(self, data_source_path, labels_path, data_target_path):
+    def __init__(self, data_source_path, labels_path):
         self.data_source_path = data_source_path
-        self.data_target_path = data_target_path
         self.labels_path = labels_path
 
         self.filenames = []
@@ -204,7 +203,7 @@ if __name__ == "__main__":
     #labels_path = "/local/scratch/faehnrich/AgroscopeData/LabelledSequencesMerged.xlsx"
     #data_target_path = "/local/scratch/faehnrich/AgroscopeData/Training/DataAlphaBeta"
 
-    split_set = SplitSet(data_source_path, labels_path, data_target_path)
+    split_set = SplitSet(data_source_path, labels_path)
     split_set.set_ignored_labels(["Env sounds"])
     split_set.read_data("File", "Verification 1", "location")
     split_set.select_split_method("balanced")
