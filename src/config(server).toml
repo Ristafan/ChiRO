@@ -9,5 +9,6 @@ spectrograms_dir = "/local/scratch/faehnrich/Spectrograms"
 
 [model]
 alpha = "/home/user/faehnrich/ChiRO/data/DataAlpha/models/Alpha"
+alpha_beta = "/home/user/faehnrich/ChiRO/data/DataAlpha/models/AlphaBeta"
 beta = "/home/user/faehnrich/ChiRO/data/DataAlpha/models/Beta"
 gamma = "/home/user/faehnrich/ChiRO/data/DataAlpha/models/Gamma"

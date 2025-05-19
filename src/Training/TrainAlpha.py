@@ -103,8 +103,8 @@ def collate_fn(batch):
 
 if __name__ == '__main__':
     # Define whether spectrograms are already computed
-    splits_aleady_computed = True
-    spectrogram_already_computed = True
+    splits_aleady_computed = False
+    spectrogram_already_computed = False
 
     # Load configuration paths
     config = load_config()
