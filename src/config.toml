@@ -1,7 +1,9 @@
 [dataset]
 files_path_root = "D:/Bachelorarbeit/AgroscopeData/LabelledSequences"
-train_files_and_labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/DataBeta/dataset_info_min/train_dataset_info.xlsx"
 original_files_and_labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged.xlsx"
+train_files_and_labels_path_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Alpha/train_dataset_info.xlsx"
+train_files_and_labels_path_alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"
+
 
 [spectrogram]
 spectrograms_dir = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/spectrograms"

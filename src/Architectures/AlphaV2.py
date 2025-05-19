@@ -4,16 +4,17 @@ import torch.nn.functional as F
 
 
 class AlphaV2(nn.Module):
-    def __init__(self, dropout_rate=0.3):
+    def __init__(self, dropout_rate=0.3, batch_norm=True):
         super(AlphaV2, self).__init__()
 
         # Convolutional layers
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
-        self.dropout = nn.Dropout(dropout_rate)
-
+        self.batchnorm1 = nn.BatchNorm2d(32) if batch_norm else None
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.batchnorm2 = nn.BatchNorm2d(64) if batch_norm else None
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.dropout = nn.Dropout(dropout_rate)
 
         # Global average pooling - works with any input size
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -27,13 +28,13 @@ class AlphaV2(nn.Module):
         x = self.conv1(x)
         x = F.relu(x)
         x = self.pool(x)
-        x = self.dropout(x)
+        x = self.batchnorm1(x) if self.batchnorm1 else x
 
         # Second block
         x = self.conv2(x)
         x = F.relu(x)
         x = self.pool(x)
-        x = self.dropout(x)
+        x = self.batchnorm2(x) if self.batchnorm2 else x
 
         # Third block
         x = self.conv3(x)

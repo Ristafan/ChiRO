@@ -3,12 +3,13 @@ from tqdm import tqdm
 import os
 import wandb
 from torch.utils.data import DataLoader
+import torch.nn.functional as F
 import torch
-from src.Preprocessing.AudioLoader import AudioLoader
-from src.Preprocessing.LabelsLoader import LabelsLoader
-from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
+from datetime import datetime
+
+from src.DataSetSplit.TrainingClasses import bat_species
+from src.Preprocessing.Preprocessor import Preprocessor
 from src.Architectures.AlphaV2 import AlphaV2
-from src.Preprocessing.BatCallDataSet import BatCallDataset
 from src.utils import load_config
 
 # Set memory allocation configuration
@@ -18,9 +19,6 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-
-    # Enable mixed precision training
-    scaler = torch.cuda.amp.GradScaler()
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -32,9 +30,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
         running_loss = 0.0
         correct = 0
         total = 0
-
-        # Clear cache before each epoch
-        torch.cuda.empty_cache()
 
         # Add progress bar for each epoch
         train_pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Train]")
@@ -53,10 +48,8 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
                 outputs = model(spectrograms)  # Process whole batch at once
                 loss = criterion(outputs, labels)
 
-            # Scale gradients and perform backward pass
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            # Backward pass and optimization
+            loss.backward()
 
             running_loss += loss.item()
 
@@ -86,15 +79,12 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
             "learning_rate": optimizer.param_groups[0]['lr']
         })
 
-
     print("Training complete!")
 
     return model
 
 
 def collate_fn(batch):
-    import torch.nn.functional as F
-
     spectrograms = [item[0] for item in batch]
     labels = [item[1] for item in batch]
 
@@ -112,22 +102,17 @@ def collate_fn(batch):
 
 
 if __name__ == '__main__':
-    # Load configuration
+    # Define whether spectrograms are already computed
+    splits_aleady_computed = True
+    spectrogram_already_computed = True
+
+    # Load configuration paths
     config = load_config()
-
-    # Set up paths
-    spectrogram_already_computed = False
-    example_data = False
-
-    # Paths for example data
-    files_path = config['example_data']['train_files_labels']
+    train_files_and_labels_path = config['dataset']['train_files_and_labels_path_alpha']
+    original_files_and_labels_path = config['dataset']['original_files_and_labels_path']
+    root_files_path = config['dataset']['files_path_root']
     spectrograms_path = config['spectrogram']['spectrograms_dir']
-
     model_path = config['model']['alpha']
-
-    if not example_data:
-        files_path = config['dataset']['train_files_labels']
-        spectrograms_path = config['spectrogram']['spectrograms_dir']
 
     wandb.login(key="32b08e4c860b935b2cd9c30774889b952ffefe0d")
 
@@ -138,42 +123,40 @@ if __name__ == '__main__':
         config={
             "notes": "",
             "learning_rate": 0.001,
-            "dataset": "Example-BatCalls-Environment",
-            "num_epochs": 4,
-            "batch_size": 8,
+            "dataset": "BatCalls-Environment",
+            "num_epochs": 2,
+            "batch_size": 2,
             "model": "AlphaV2",
-            "model_name": "alphaV2.pth",
+            "model_name": f"alphaV2_{datetime.now().strftime("%H-%M-%S")}.pth",
         },
     )
 
     wb_config = wandb.config
 
+    # Load Audio Files, Labels and create spectrograms
+    preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
+
+    if not splits_aleady_computed:
+        _ = preprocessor.create_data_splits(original_files_and_labels_path,
+                                                  use_min_files_per_class=True,
+                                                  total_files_per_class=100,
+                                                  ignored_labels=None,
+                                                  merge_labels=[bat_species],
+                                                  split_method="balanced",
+                                                  train_ratio=0.7,
+                                                  test_ratio=0.2,
+                                                  seed=42)
+
     if not spectrogram_already_computed:
-        # Load Audio Files and create spectrograms
-        audio_loader = AudioLoader()
-        audio_loader.load_audio_from_exel(files_path)
-        waveforms = audio_loader.get_data()
-        names = audio_loader.get_file_names_from_excel(files_path)
+        preprocessor.create_spectrograms()
 
-        # Create Spectrograms
-        for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
-            sp = SpectrogramProcessor(waveforms[i])
-            sp.apply_highpass_filter()
-            sp.compute_spectrogram()
-            sp.denoise_spectrogram()
-            sp.save_spectrogram(f'{names[i]}', spectrograms_path + '/')
+    train_dataset = preprocessor.create_bat_call_dataset()
 
-    # Load training labels from Excel
-    labels_loader = LabelsLoader(files_path, filename_column="Filename", text_column="label")
-    labels_loader.load_labels_excel()
-
-    # Create training Dataset & DataLoader
-    train_dataset = BatCallDataset(spectrograms_path, labels_loader)
     train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size,
                               shuffle=True, collate_fn=collate_fn, num_workers=2)
 
     # Initialize Model
-    model = AlphaV2()
+    model = AlphaV2(batch_norm=False)
 
     # Log model architecture
     wandb.log({"model_summary": str(model)})

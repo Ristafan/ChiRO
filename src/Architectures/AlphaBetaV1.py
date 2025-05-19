@@ -4,19 +4,23 @@ import torch.nn.functional as F
 
 
 class AlphaBetaV1(nn.Module):
-    def __init__(self, num_genera, dropout_rate=0.3):
+    def __init__(self, num_genera, dropout_rate=0.3, batch_norm=True):
         super(AlphaBetaV1, self).__init__()
 
         # Shared convolutional layers (same as AlphaV2)
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
-        self.dropout = nn.Dropout(dropout_rate)
+        self.batchnorm1 = nn.BatchNorm2d(32) if batch_norm else None
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.batchnorm2 = nn.BatchNorm2d(64) if batch_norm else None
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
 
         # Shared fully connected layer
         self.fc1 = nn.Linear(128, 64)
+
+        # Dropout layer
+        self.dropout = nn.Dropout(dropout_rate)
 
         # Head Alpha: Bat call or noise classification
         self.head_alpha = nn.Linear(64, 2)  # 2 classes: bat call or noise
@@ -29,12 +33,12 @@ class AlphaBetaV1(nn.Module):
         x = self.conv1(x)
         x = F.relu(x)
         x = self.pool(x)
-        x = self.dropout(x)
+        x = self.batchnorm1(x) if self.batchnorm1 else x
 
         x = self.conv2(x)
         x = F.relu(x)
         x = self.pool(x)
-        x = self.dropout(x)
+        x = self.batchnorm2(x) if self.batchnorm2 else x
 
         x = self.conv3(x)
         x = F.relu(x)

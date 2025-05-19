@@ -6,17 +6,17 @@ from torch.utils.data import Dataset
 
 
 class BatCallDataset(Dataset):
-    def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", text_column="Label"):
+    def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", label_column="Label"):
         """
         :param spectrogram_dir: Path to folder containing spectrogram .pt files
         :param labels_path: Path to Excel file containing labels
         :param filename_column: Column name in Excel file for filenames
-        :param text_column: Column name in Excel file for labels
+        :param label_column: Column name in Excel file for labels
         """
         self.spectrogram_dir = spectrogram_dir
         self.labels_path = labels_path
         self.filename_column = filename_column
-        self.text_column = text_column
+        self.label_column = label_column
 
         self.filenames = []
         self.labels = {}
@@ -50,7 +50,7 @@ class BatCallDataset(Dataset):
     def load_labels_excel(self):
         data = pd.read_excel(self.labels_path)
         self.filenames = data[self.filename_column].tolist()
-        self.labels = {row[self.filename_column]: int(row[self.text_column]) for _, row in data.iterrows()}
+        self.labels = {row[self.filename_column]: int(row[self.label_column]) for _, row in data.iterrows()}
 
 
 if __name__ == '__main__':

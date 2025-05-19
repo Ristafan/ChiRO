@@ -1,8 +1,8 @@
 [dataset]
-train_files_labels = "/local/scratch/faehnrich/AgroscopeData/Training/DataAlphaBeta/dataset_info_min/train_dataset_info.xlsx"
-
-[example_data]
-train_files_labels = ""
+files_path_root = "/local/scratch/faehnrich/AgroscopeData/LabelledSequences"
+original_files_and_labels_path = "/local/scratch/faehnrich/AgroscopeData/LabelledSequencesMerged.xlsx"
+train_files_and_labels_path_alpha = "/local/scratch/faehnrich/Labels/Alpha/train_dataset_info.xlsx"
+train_files_and_labels_path_alpha_beta = "/local/scratch/faehnrich/Labels/AlphaBeta/train_dataset_info.xlsx"
 
 [spectrogram]
 spectrograms_dir = "/local/scratch/faehnrich/Spectrograms"

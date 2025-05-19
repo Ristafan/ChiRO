@@ -32,13 +32,14 @@ class Preprocessor:
 
         if use_min_files_per_class:
             # Using minimum files per class
-            split_set.create_splits(use_min_files_per_class=use_min_files_per_class, merge_labels=merge_labels)
+            noise_label = split_set.create_splits(use_min_files_per_class=use_min_files_per_class, merge_labels=merge_labels)
         else:
             # Using total files per class
-            split_set.create_splits(total_files_per_class=total_files_per_class, merge_labels=merge_labels)
+            noise_label = split_set.create_splits(total_files_per_class=total_files_per_class, merge_labels=merge_labels)
 
         # Save the splits to Excel files
         split_set.export_to_excel(os.path.dirname(self.files_and_labels_path))
+        return noise_label
 
     def create_spectrograms(self):
         # Load Audio Files and create spectrograms

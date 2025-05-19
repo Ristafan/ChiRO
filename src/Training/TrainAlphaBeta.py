@@ -11,11 +11,8 @@ from datetime import datetime
 
 from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, \
     Chiroptera_generally
-from src.Preprocessing.AudioLoader import AudioLoader
 from src.Preprocessing.Preprocessor import Preprocessor
-from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
 from src.Architectures.AlphaBetaV1 import AlphaBetaV1
-from src.Preprocessing.BatCallDataset import BatCallDataset
 from src.utils import load_config
 
 # Set memory allocation configuration
@@ -23,7 +20,7 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 
 def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
-                noise_label=7, generic_bat_label=6):
+                noise_label=7):
     """
     Trains the AlphaBeta model.
 
@@ -61,19 +58,16 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
         total_beta = 0
 
         # Add progress bar for each epoch
-        train_pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Train]")
+        train_pbar = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{num_epochs} [Train]")
 
         for batch_idx, (spectrograms, labels) in enumerate(train_pbar):
             spectrograms = spectrograms.to(device)
             labels_alpha = labels[:, 0].to(device)  # Bat call/noise labels
             labels_beta = labels[:, 1].to(device)  # Genus labels
-            # Convert to half precision to save memory
-            spectrograms = spectrograms.half()
 
             # Calculate and print batch statistics
             batch_mean = spectrograms.mean()
             batch_std = spectrograms.std()
-            print(f"Batch {batch_idx+1}: Mean = {batch_mean.item():.4f}, Std = {batch_std.item():.4f}")
 
             # Store batch statistics for the entire dataset
             all_means.append(batch_mean.item())
@@ -83,6 +77,7 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
 
             # Use automatic mixed precision
             outputs_alpha, outputs_beta = model(spectrograms)
+
             loss = criterion(outputs_alpha, labels_alpha, outputs_beta, labels_beta)
 
             # Perform backward pass
@@ -112,7 +107,7 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
         train_loss = running_loss / len(train_loader)
         train_acc_alpha = 100 * correct_alpha / total_alpha
         train_acc_beta = 100 * correct_beta / total_beta if total_beta > 0 else 0
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {train_loss:.4f}, "
+        print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {train_loss:.4f}, "
               f"Accuracy Alpha: {train_acc_alpha:.2f}%, Accuracy Beta: {train_acc_beta:.2f}%")
 
         # Log training metrics
@@ -126,7 +121,8 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
 
     # Calculate and print statistics for the entire dataset
     dataset_mean = sum(all_means) / len(all_means)
-    dataset_std = (sum((x - dataset_mean) ** 2 for x in all_stds) / (len(all_stds) - 1)) ** 0.5 if len(all_stds) > 1 else 0
+    dataset_std = (sum((x - dataset_mean) ** 2 for x in all_stds) / (len(all_stds) - 1)) ** 0.5 if len(
+        all_stds) > 1 else 0
     print(f"Dataset: Mean = {dataset_mean:.4f}, Std = {dataset_std:.4f}")
 
     print("Training complete!")
@@ -151,7 +147,7 @@ def combined_loss(output_alpha, target_alpha, output_beta, target_beta, noise_la
     return combined_loss
 
 
-def collate_fn(batch):
+def collate_fn(batch, noise_label=7):
     import torch.nn.functional as F
 
     spectrograms = [item[0] for item in batch]
@@ -161,7 +157,7 @@ def collate_fn(batch):
         # item[1] is now a scalar tensor, so we extract the value directly
         label_value = item[1].item()
         # Derive alpha label: 1 for bat call, 0 for noise
-        if label_value == 7:  # Use the noise_label
+        if label_value == noise_label:  # Use the noise_label
             alpha_label = 0
         else:
             alpha_label = 1
@@ -184,11 +180,12 @@ def collate_fn(batch):
 
 if __name__ == '__main__':
     # Define whether spectrograms are already computed
-    spectrogram_already_computed = False
+    splits_already_computed = True
+    spectrogram_already_computed = True
 
     # Load configuration paths
     config = load_config()
-    train_files_and_labels_path = config['dataset']['train_files_and_labels_path']
+    train_files_and_labels_path = config['dataset']['train_files_and_labels_path_alpha_beta']
     original_files_and_labels_path = config['dataset']['original_files_and_labels_path']
     root_files_path = config['dataset']['files_path_root']
     spectrograms_path = config['spectrogram']['spectrograms_dir']
@@ -204,31 +201,33 @@ if __name__ == '__main__':
             "notes": "Training AlphaBeta model with dynamic labels",
             "learning_rate": 0.001,
             "dataset": "Example-BatCalls-Environment",
-            "num_epochs": 4,
-            "batch_size": 8,
+            "num_epochs": 2,
+            "batch_size": 2,
             "model": "AlphaBetaV1",
             "model_name": f"alphaBeta_{datetime.now().strftime('%H-%M-%S')}.pth",
-            "noise_label": 7,  # Add noise_label to config
-            "generic_bat_label": 6, # Add generic bat label to config
         },
     )
 
     wb_config = wandb.config
 
-    noise_label = wb_config.noise_label # Get the noise label from config
-    generic_bat_label = wb_config.generic_bat_label # Get the generic bat label.
-
     # Load Audio Files, Labels and create spectrograms
     preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
-    preprocessor.create_data_splits(original_files_and_labels_path,
-                                    use_min_files_per_class=True,
-                                    total_files_per_class=100,
-                                    ignored_labels=["Env sounds"],
-                                    merge_labels=[eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally],
-                                    split_method="balanced",
-                                    train_ratio=0.7,
-                                    test_ratio=0.2,
-                                    seed=42)
+
+    if not splits_already_computed:
+        noise_label = preprocessor.create_data_splits(original_files_and_labels_path,
+                                                      use_min_files_per_class=True,
+                                                      total_files_per_class=100,
+                                                      ignored_labels=None,
+                                                      merge_labels=[eptesicus_species, myotis_species, nyctalus_species,
+                                                                    pipistrellus_species, Chiroptera_generally],
+                                                      split_method="balanced",
+                                                      train_ratio=0.7,
+                                                      test_ratio=0.2,
+                                                      seed=42)
+    else:
+        noise_label = 1
+
+    print(f"Noise label: {noise_label}")
 
     if not spectrogram_already_computed:
         preprocessor.create_spectrograms()
@@ -246,7 +245,7 @@ if __name__ == '__main__':
 
     model = train_model(model, train_loader, num_epochs=wb_config.num_epochs,
                         learning_rate=wb_config.learning_rate,
-                        noise_label=noise_label, generic_bat_label=generic_bat_label) # Pass noise label
+                        noise_label=noise_label)  # Pass noise label
 
     # Ensure the directory exists
     os.makedirs(model_path, exist_ok=True)

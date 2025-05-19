@@ -167,6 +167,9 @@ class SplitSet:
 
         print(f"\nFinal set sizes - Train: {len(self.train_set)}, Val: {len(self.val_set)}, Test: {len(self.test_set)}")
 
+        # Return label of "Env sounds" if present
+        return self.class_to_numeric_label.get("Env sounds", -1)  # -1 for unknown
+
     def export_to_excel(self, output_dir):
         os.makedirs(output_dir, exist_ok=True)
 

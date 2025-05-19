@@ -7,6 +7,7 @@ def load_config():
     """
     # Load the pyproject.toml file
     with open("../config.toml", "r") as f:
+    #with open("/home/user/faehnrich/ChiRO/src/config(server).toml", "r") as f:
         pyproject = toml.load(f)
 
     return pyproject
