@@ -101,7 +101,7 @@ class BatCallDataSet(Dataset):
             idx = 0
             if self.num_calls[filename] > 0:
                 for i in range(self.num_calls[filename]):
-                    self.filenames_with_calls.append(f"{filename}_{idx}")
+                    self.filenames_with_calls.append(f"{filename}-{idx}")
                     self.start_times[f"{filename}-{idx}"] = self.start_times[filename][i]
                     self.end_times[f"{filename}-{idx}"] = self.end_times[filename][i]
                     idx += 1
