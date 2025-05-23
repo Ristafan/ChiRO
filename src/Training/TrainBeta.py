@@ -8,6 +8,7 @@ import torch
 from datetime import datetime
 
 from src.Architectures.BetaV1 import BetaV1
+from src.Architectures.BetaV2 import ResNet50ForSpectrogram
 from src.Batdetect2.CallsDetector import CallsDetector
 from src.Batdetect2.Net2DFast import Net2DFast
 from src.DataSetSplit.TrainingClasses import bat_species, eptesicus_species, myotis_species, pipistrellus_species, \
@@ -97,12 +98,13 @@ def collate_fn(batch):
 
 if __name__ == '__main__':
     # Define whether spectrograms are already computed
-    splits_aleady_computed = False
-    spectrogram_already_computed = False
-    calls_already_detected = False
+    splits_aleady_computed = True
+    spectrogram_already_computed = True
+    calls_already_detected = True
 
     # Load configuration paths
     config = load_config()
+    num_genera = 7
     train_files_and_labels_path = config['dataset']['train_files_and_labels_path_beta']
     original_files_and_labels_path = config['dataset']['original_files_and_labels_path']
     root_files_path = config['dataset']['files_path_root']
@@ -120,10 +122,10 @@ if __name__ == '__main__':
             "notes": "",
             "learning_rate": 0.001,
             "dataset": "BatCalls",
-            "num_epochs": 2,
-            "batch_size": 2,
+            "num_epochs": 5,
+            "batch_size": 1,
             "model": "BetaV1",
-            "model_name": f"betaV1_{datetime.now().strftime('%H-%M-%S')}.pth",
+            "model_name": f"betaV2_{datetime.now().strftime('%H-%M-%S')}.pth",
         },
     )
 
@@ -159,7 +161,7 @@ if __name__ == '__main__':
                               shuffle=True, collate_fn=collate_fn, num_workers=2)
 
     # Initialize Model
-    model = BetaV1(num_genera=7, dropout_rate=0.3)
+    model = ResNet50ForSpectrogram(num_classes=num_genera, use_separable=False)
 
     # Log model architecture
     wandb.log({"model_summary": str(model)})
