@@ -16,7 +16,6 @@ except ImportError:
 import compute_features as feats
 import post_process as pp
 import audio_utils as au
-import model
 from parameters import DEFAULT_MODEL_PATH
 from src.Batdetect2.types import (
     Annotation,
