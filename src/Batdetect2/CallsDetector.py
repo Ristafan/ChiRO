@@ -70,9 +70,9 @@ class CallsDetector:
             self.end_times[key] = str(self.end_times[key])
 
         # Create DataFrames from each dictionary using 'Filepath' as the key
-        df_start = pd.DataFrame.from_dict(self.start_times, orient='index', columns=['Start Time'])
-        df_end = pd.DataFrame.from_dict(self.end_times, orient='index', columns=['End Time'])
-        df_calls = pd.DataFrame.from_dict(self.num_calls, orient='index', columns=['Num Calls'])
+        df_start = pd.DataFrame.from_dict(self.start_times, orient='index', columns=['start_time'])
+        df_end = pd.DataFrame.from_dict(self.end_times, orient='index', columns=['end_time'])
+        df_calls = pd.DataFrame.from_dict(self.num_calls, orient='index', columns=['num_calls'])
 
         # Ensure index is labeled 'Filepath' to merge correctly
         df_start.index.name = 'Filepath'
