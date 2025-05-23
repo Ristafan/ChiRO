@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 
 
-class BatCallDataset(Dataset):
+class BatFileDataSet(Dataset):
     def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", label_column="Label"):
         """
         :param spectrogram_dir: Path to folder containing spectrogram .pt files
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     spec_dir = 'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms'
     labels_excel = 'C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels_exampledata.xlsx'
 
-    dataset = BatCallDataset(spec_dir, labels_excel)
+    dataset = BatFileDataSet(spec_dir, labels_excel)
     print(f"Dataset size: {len(dataset)}")
     spec, lab = dataset[0]  # Get the first item
     print(f"Spectrogram shape: {spec.shape}")
