@@ -2,38 +2,23 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# --- Helper for Depthwise Separable Convolution (from previous discussion) ---
-class SeparableConv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, bias=False):
-        super(SeparableConv2d, self).__init__()
-        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size,
-                                   stride=stride, padding=padding, dilation=dilation,
-                                   groups=in_channels, bias=bias)
-        self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0, bias=bias)
-
-    def forward(self, x):
-        x = self.depthwise(x)
-        x = self.pointwise(x)
-        return x
-
-# --- ResNet Bottleneck Block ---
+# --- ResNet Bottleneck Block (using standard Conv2d) ---
 class Bottleneck(nn.Module):
     expansion = 4 # Each bottleneck block expands channels by this factor
 
-    def __init__(self, in_channels, out_channels, stride=1, downsample=None, use_separable=False):
+    def __init__(self, in_channels, out_channels, stride=1, downsample=None):
         super(Bottleneck, self).__init__()
-        Conv = SeparableConv2d if use_separable else nn.Conv2d
 
         # First 1x1 convolution (reduce dimensions)
-        self.conv1 = Conv(in_channels, out_channels, kernel_size=1, bias=False)
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
 
         # 3x3 convolution (main feature extraction)
-        self.conv2 = Conv(out_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_channels)
 
         # Second 1x1 convolution (expand dimensions back)
-        self.conv3 = Conv(out_channels, out_channels * self.expansion, kernel_size=1, bias=False)
+        self.conv3 = nn.Conv2d(out_channels, out_channels * self.expansion, kernel_size=1, bias=False)
         self.bn3 = nn.BatchNorm2d(out_channels * self.expansion)
 
         self.relu = nn.ReLU(inplace=True)
@@ -62,14 +47,11 @@ class Bottleneck(nn.Module):
 
         return out
 
-# --- ResNet50 Architecture for Spectrograms ---
+# --- ResNet50 Architecture for Spectrograms (using standard Conv2d) ---
 class ResNet50ForSpectrogram(nn.Module):
-    def __init__(self, num_classes, use_separable=False):
+    def __init__(self, num_classes):
         super(ResNet50ForSpectrogram, self).__init__()
         self.in_channels = 64 # Initial number of channels after the first conv
-        self.use_separable = use_separable # Option to use separable convolutions
-        Conv = SeparableConv2d if use_separable else nn.Conv2d
-
 
         # --- Initial Layer ---
         # Original ResNet uses a 7x7 conv with stride 2.
@@ -95,7 +77,7 @@ class ResNet50ForSpectrogram(nn.Module):
 
         # Initialize weights (standard practice for CNNs)
         for m in self.modules():
-            if isinstance(m, nn.Conv2d) or isinstance(m, SeparableConv2d):
+            if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
@@ -107,7 +89,7 @@ class ResNet50ForSpectrogram(nn.Module):
         # if the spatial dimensions change or the channel count changes.
         if stride != 1 or self.in_channels != out_channels * block.expansion:
             downsample = nn.Sequential(
-                (SeparableConv2d if self.use_separable else nn.Conv2d)(
+                nn.Conv2d(
                     self.in_channels,
                     out_channels * block.expansion,
                     kernel_size=1,
@@ -118,10 +100,10 @@ class ResNet50ForSpectrogram(nn.Module):
             )
 
         layers = []
-        layers.append(block(self.in_channels, out_channels, stride, downsample, use_separable=self.use_separable))
+        layers.append(block(self.in_channels, out_channels, stride, downsample))
         self.in_channels = out_channels * block.expansion
         for _ in range(1, blocks):
-            layers.append(block(self.in_channels, out_channels, use_separable=self.use_separable))
+            layers.append(block(self.in_channels, out_channels))
 
         return nn.Sequential(*layers)
 
@@ -145,36 +127,23 @@ class ResNet50ForSpectrogram(nn.Module):
 
         return x
 
-
 if __name__ == '__main__':
     # Example usage for your bat call classification
     num_genera = 7 # As per your BetaV1 num_genera
     # Example input: Batch size 4, 1 channel, 128 freq bins, 256 time steps
-    # Spectrogram size will vary based on your `Preprocessor` and `CallsDetector` output.
     # Adjust this to match your actual average/padded spectrogram snippet size.
     example_input = torch.randn(4, 1, 128, 256)
 
     print("--- ResNet50 (Standard Convolutions) ---")
-    model_resnet_standard = ResNet50ForSpectrogram(num_classes=num_genera, use_separable=False)
+    model_resnet_standard = ResNet50ForSpectrogram(num_classes=num_genera)
     print(model_resnet_standard)
     num_params_standard = sum(p.numel() for p in model_resnet_standard.parameters() if p.requires_grad)
     print(f"Number of parameters (Standard Conv): {num_params_standard}")
     output_standard = model_resnet_standard(example_input)
     print(f"Output shape (Standard Conv): {output_standard.shape}\n")
 
-
-    print("--- ResNet50 (with Separable Convolutions) ---")
-    model_resnet_separable = ResNet50ForSpectrogram(num_classes=num_genera, use_separable=True)
-    print(model_resnet_separable)
-    num_params_separable = sum(p.numel() for p in model_resnet_separable.parameters() if p.requires_grad)
-    print(f"Number of parameters (Separable Conv): {num_params_separable}")
-    output_separable = model_resnet_separable(example_input)
-    print(f"Output shape (Separable Conv): {output_separable.shape}")
-
     # To integrate this into your training script:
     # 1. Replace `BetaV1` with `ResNet50ForSpectrogram` in your `if __name__ == '__main__':` block.
-    #    model = ResNet50ForSpectrogram(num_classes=num_genera, use_separable=True) # or False
+    #    model = ResNet50ForSpectrogram(num_classes=num_genera)
     # 2. Make sure `num_genera` matches the actual number of classes from your dataset.
-    # 3. Carefully consider the input spectrogram dimensions. ResNet50 has aggressive downsampling.
-    #    If your snippets are small (e.g., 64x64), the initial `conv1` and `maxpool` might reduce them too much.
-    #    You might need to adjust `kernel_size` and `stride` of `conv1` and `maxpool` or increase the input size.
+    # 3. Remember the input spectrogram dimensions considerations discussed previously.

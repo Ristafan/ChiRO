@@ -39,18 +39,20 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
         train_pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Train]")
 
         for batch_idx, (spectrograms, labels) in enumerate(train_pbar):
+            # Clear cache
+            torch.cuda.empty_cache()
+
             spectrograms = spectrograms.to(device)
             labels = labels.to(device)
 
             optimizer.zero_grad()
-
-            # Use automatic mixed precision
-            with torch.cuda.amp.autocast():
-                outputs = model(spectrograms)  # Process whole batch at once
-                loss = criterion(outputs, labels)
+            outputs = model(spectrograms)  # Process whole batch at once
+            loss = criterion(outputs, labels)
 
             # Backward pass and optimization
             loss.backward()
+
+            torch.cuda.empty_cache()
 
             running_loss += loss.item()
 
@@ -125,7 +127,7 @@ if __name__ == '__main__':
             "num_epochs": 5,
             "batch_size": 1,
             "model": "BetaV1",
-            "model_name": f"betaV2_{datetime.now().strftime('%H-%M-%S')}.pth",
+            "model_name": f"betaV2_separable_{datetime.now().strftime('%H-%M-%S')}.pth",
         },
     )
 
@@ -158,10 +160,10 @@ if __name__ == '__main__':
     train_dataset = preprocessor.create_bat_call_dataset()
 
     train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size,
-                              shuffle=True, collate_fn=collate_fn, num_workers=2)
+                              shuffle=True, collate_fn=collate_fn, num_workers=2, pin_memory=True)
 
     # Initialize Model
-    model = ResNet50ForSpectrogram(num_classes=num_genera, use_separable=False)
+    model = ResNet50ForSpectrogram(num_classes=num_genera, use_separable=True)
 
     # Log model architecture
     wandb.log({"model_summary": str(model)})
