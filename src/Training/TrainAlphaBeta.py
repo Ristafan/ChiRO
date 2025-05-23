@@ -148,8 +148,6 @@ def combined_loss(output_alpha, target_alpha, output_beta, target_beta, noise_la
 
 
 def collate_fn(batch, noise_label=7):
-    import torch.nn.functional as F
-
     spectrograms = [item[0] for item in batch]
     labels_alpha = []
     labels_beta = []
@@ -180,8 +178,8 @@ def collate_fn(batch, noise_label=7):
 
 if __name__ == '__main__':
     # Define whether spectrograms are already computed
-    splits_already_computed = False
-    spectrogram_already_computed = False
+    splits_already_computed = True
+    spectrogram_already_computed = True
 
     # Load configuration paths
     config = load_config()

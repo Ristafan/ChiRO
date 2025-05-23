@@ -80,10 +80,10 @@ class BatCallDataSet(Dataset):
                     start_time = []
                 else:
                     start_time = start_time.strip("[]").split(" ")
-                    start_time = [self.convert_time_to_frames(float(t), 44100, 0.025, 0.5) for t in start_time]
+                    start_time = [self.convert_time_to_frames(float(t)) for t in start_time]
             if isinstance(end_time, str):
                 if end_time == "[]":
-                    end_time = [self.convert_time_to_frames(float(t), 44100, 0.025, 0.5) for t in end_time]
+                    end_time = [self.convert_time_to_frames(float(t)) for t in end_time]
                 else:
                     end_time = end_time.strip("[]").split(" ")
 
@@ -91,9 +91,10 @@ class BatCallDataSet(Dataset):
             self.end_times[filename] = end_time
 
     @staticmethod
-    def convert_time_to_frames(time, sample_rate, fft_win_length_s, fft_overlap):
-        hop_size_samples = int(fft_win_length_s * sample_rate * (1 - fft_overlap))
-        return int(time * sample_rate / hop_size_samples)
+    def convert_time_to_frames(time, sample_rate=192000, win_length=2048, hop_length=None):
+        if hop_length is None:
+            hop_length = win_length // 2
+        return int(time * sample_rate / hop_length)
 
     def create_filenames_with_calls(self):
         for filename in self.filenames:

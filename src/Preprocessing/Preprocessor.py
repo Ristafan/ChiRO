@@ -7,7 +7,7 @@ from src.DataSetSplit.SplitSets import SplitSet
 from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, \
     Chiroptera_generally
 from src.Preprocessing.AudioLoader import AudioLoader
-from src.Preprocessing.BatCallDataset import BatCallDataset
+from src.Preprocessing.BatFileDataSet import BatFileDataSet
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
 
 
@@ -56,5 +56,8 @@ class Preprocessor:
             sp.denoise_spectrogram()
             sp.save_spectrogram(f'{names[i]}', self.spectrograms_path + '/')
 
+    def create_bat_file_dataset(self):
+        return BatFileDataSet(self.spectrograms_path, self.files_and_labels_path, "Filename", "label")
+
     def create_bat_call_dataset(self):
-        return BatCallDataset(self.spectrograms_path, self.files_and_labels_path, "Filename", "label")
+        return BatFileDataSet(self.spectrograms_path, self.files_and_labels_path, "Filename", "label")
