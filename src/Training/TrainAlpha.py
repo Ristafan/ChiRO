@@ -127,7 +127,7 @@ if __name__ == '__main__':
             "num_epochs": 2,
             "batch_size": 2,
             "model": "AlphaV2",
-            "model_name": f"alphaV2_{datetime.now().strftime("%H-%M-%S")}.pth",
+            "model_name": f"alphaV2_{datetime.now().strftime('%H-%M-%S')}.pth",
         },
     )
 
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     if not spectrogram_already_computed:
         preprocessor.create_spectrograms()
 
-    train_dataset = preprocessor.create_bat_call_dataset()
+    train_dataset = preprocessor.create_bat_file_dataset()
 
     train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size,
                               shuffle=True, collate_fn=collate_fn, num_workers=2)
