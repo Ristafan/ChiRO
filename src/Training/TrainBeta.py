@@ -3,13 +3,16 @@ from tqdm import tqdm
 import os
 import wandb
 from torch.utils.data import DataLoader
+import torch.nn.functional as F
 import torch
 from datetime import datetime
-from src.Preprocessing.AudioLoader import AudioLoader
-from src.Preprocessing.LabelsLoader import LabelsLoader
-from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
-from src.Architectures.BetaV1 import BetaV1  # Import your BetaV1 model
-from src.Preprocessing.BatCallDataset import BatCallDataset
+
+from src.Architectures.BetaV1 import BetaV1
+from src.Batdetect2.CallsDetector import CallsDetector
+from src.Batdetect2.Net2DFast import Net2DFast
+from src.DataSetSplit.TrainingClasses import bat_species, eptesicus_species, myotis_species, pipistrellus_species, \
+    Chiroptera_generally, nyctalus_species
+from src.Preprocessing.Preprocessor import Preprocessor
 from src.utils import load_config
 
 # Set memory allocation configuration
@@ -19,9 +22,6 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-
-    # Enable mixed precision training
-    scaler = torch.cuda.amp.GradScaler()
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -34,18 +34,12 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
         correct = 0
         total = 0
 
-        # Clear cache before each epoch
-        torch.cuda.empty_cache()
-
         # Add progress bar for each epoch
         train_pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Train]")
 
         for batch_idx, (spectrograms, labels) in enumerate(train_pbar):
             spectrograms = spectrograms.to(device)
             labels = labels.to(device)
-
-            # Convert to half precision to save memory
-            spectrograms = spectrograms.half()
 
             optimizer.zero_grad()
 
@@ -54,10 +48,8 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
                 outputs = model(spectrograms)  # Process whole batch at once
                 loss = criterion(outputs, labels)
 
-            # Scale gradients and perform backward pass
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            # Backward pass and optimization
+            loss.backward()
 
             running_loss += loss.item()
 
@@ -68,12 +60,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
 
             # Update progress bar
             train_pbar.set_postfix({'loss': loss.item(), 'acc': 100 * correct / total})
-
-            # Clear memory every few batches if needed
-            if batch_idx % 50 == 0:
-                torch.cuda.empty_cache()
-                # Debug memory
-                # print(f"Memory after batch {batch_idx}: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
 
         train_loss = running_loss / len(train_loader)
         train_acc = 100 * correct / total
@@ -93,8 +79,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
 
 
 def collate_fn(batch):
-    import torch.nn.functional as F
-
     spectrograms = [item[0] for item in batch]
     labels = [item[1] for item in batch]
 
@@ -112,63 +96,70 @@ def collate_fn(batch):
 
 
 if __name__ == '__main__':
+    # Define whether spectrograms are already computed
+    splits_aleady_computed = False
+    spectrogram_already_computed = False
+    calls_already_detected = False
+
     # Load configuration paths
     config = load_config()
-    spectrogram_already_computed = True
-
-    model_path = config['model']['beta']
-    files_path = config['dataset']['train_files_labels']  # Assuming a file with labels for genera
+    train_files_and_labels_path = config['dataset']['train_files_and_labels_path_beta']
+    original_files_and_labels_path = config['dataset']['original_files_and_labels_path']
+    root_files_path = config['dataset']['files_path_root']
     spectrograms_path = config['spectrogram']['spectrograms_dir']
+    model_path = config['model']['beta']
+    detection_model_path = config['model']['detection_model_path']
 
-    wandb.login(key="32b08e4c860b935b2cd9c30774889b952ffefe0d")  # Replace with your actual WandB API key
-
-    num_genera = 7
-    print(f"Number of genera to classify: {num_genera}")
+    wandb.login(key="32b08e4c860b935b2cd9c30774889b952ffefe0d")
 
     run = wandb.init(
         project="ChiRO",
         entity="martin-faehnrich-university-of-z-rich",
         job_type="training",
         config={
-            "notes": "Training Beta model for genus classification",
+            "notes": "",
             "learning_rate": 0.001,
-            "dataset": "test-BatCalls-Genera",
-            "num_epochs": 1,
+            "dataset": "BatCalls",
+            "num_epochs": 2,
             "batch_size": 2,
             "model": "BetaV1",
-            "num_genera": num_genera,
             "model_name": f"betaV1_{datetime.now().strftime('%H-%M-%S')}.pth",
         },
     )
 
     wb_config = wandb.config
 
+    # Load Audio Files, Labels and create spectrograms
+    preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
+
+    if not splits_aleady_computed:
+        _ = preprocessor.create_data_splits(original_files_and_labels_path,
+                                            use_min_files_per_class=True,
+                                            total_files_per_class=100,
+                                            ignored_labels=["Env sounds"],
+                                            merge_labels=[eptesicus_species, myotis_species, nyctalus_species,
+                                                          pipistrellus_species, Chiroptera_generally],
+                                            split_method="balanced",
+                                            train_ratio=0.7,
+                                            test_ratio=0.2,
+                                            seed=42)
+
     if not spectrogram_already_computed:
-        # Load Audio Files and create spectrograms
-        audio_loader = AudioLoader()
-        audio_loader.load_audio_from_exel(files_path)
-        waveforms = audio_loader.get_data()
-        names = audio_loader.get_file_names_from_excel(files_path)
+        preprocessor.create_spectrograms()
 
-        # Create Spectrograms
-        for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
-            sp = SpectrogramProcessor(waveforms[i])
-            sp.apply_highpass_filter()
-            sp.compute_spectrogram()
-            sp.denoise_spectrogram()
-            sp.save_spectrogram(f'{names[i]}', spectrograms_path + '/')
+    if not calls_already_detected:
+        detector = CallsDetector(Net2DFast(num_filts=64), detection_model_path, train_files_and_labels_path)
+        detector.load_filenames_and_filepaths()
+        detector.predict_set()
+        detector.save_predictions()
 
-    # Load training labels from Excel
-    labels_loader = LabelsLoader(files_path, filename_column="Filename", text_column="label")
-    labels_loader.load_labels_excel()
+    train_dataset = preprocessor.create_bat_call_dataset()
 
-    # Create training Dataset & DataLoader
-    train_dataset = BatCallDataset(spectrograms_path, labels_loader)
     train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size,
                               shuffle=True, collate_fn=collate_fn, num_workers=2)
 
     # Initialize Model
-    model = BetaV1(num_genera=wb_config.num_genera)
+    model = BetaV1(num_genera=7, dropout_rate=0.3)
 
     # Log model architecture
     wandb.log({"model_summary": str(model)})
