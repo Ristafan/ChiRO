@@ -8,6 +8,7 @@ import torch
 from datetime import datetime
 
 from src.Architectures.BetaV1 import BetaV1
+from src.Architectures.BetaV3 import BetaV3
 from src.Architectures.BetaV2 import ResNet50ForSpectrogram
 from src.Batdetect2.CallsDetector import CallsDetector
 from src.Batdetect2.Net2DFast import Net2DFast
@@ -163,7 +164,7 @@ if __name__ == '__main__':
                               shuffle=True, collate_fn=collate_fn, num_workers=2, pin_memory=True)
 
     # Initialize Model
-    model = ResNet50ForSpectrogram(num_classes=num_genera, use_separable=True)
+    model = BetaV3(num_genera=num_genera, dropout_rate=0.3)
 
     # Log model architecture
     wandb.log({"model_summary": str(model)})

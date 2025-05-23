@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class BetaV1(nn.Module):
+class BetaV3(nn.Module):
     def __init__(self, num_genera, dropout_rate=0.3):
-        super(BetaV1, self).__init__()
+        super(BetaV3, self).__init__()
         self.num_genera = num_genera
         self.dropout = nn.Dropout(dropout_rate)
 
@@ -59,5 +59,5 @@ class BetaV1(nn.Module):
 if __name__ == '__main__':
     # Example usage with 5 different genera
     num_genera = 5
-    model = BetaV1(num_genera=num_genera)
+    model = BetaV3(num_genera=num_genera)
     print(model)
