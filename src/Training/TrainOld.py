@@ -6,13 +6,10 @@ from torch.utils.data import DataLoader
 import torch
 
 
-from src.Logging.Logger import Logger
 from src.Preprocessing.AudioLoader import AudioLoader
-from src.Preprocessing.LabelsLoader import LabelsLoader
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
-from src.Preprocessing.SpectrogramLoader import SpectrogramLoader
 from src.Architectures.AlphaV2 import AlphaV2
-from src.Preprocessing.BatCallDataset import BatCallDataset
+from src.Preprocessing.BatFileDataSet import BatFileDataSet
 
 
 def train_model(model, train_loader, num_epochs=10, learning_rate=0.001):
@@ -114,12 +111,9 @@ if __name__ == '__main__':
             sp.denoise_spectrogram()
             sp.save_spectrogram(f'{names[i]}', spectrograms_path + '/')
 
-    # Load labels from Excel
-    labels_loader = LabelsLoader(labels_path, filename_column="Filename", text_column="label")
-    labels_loader.load_labels_excel()
 
     # Create Dataset & DataLoader
-    dataset = BatCallDataset(spectrograms_path, labels_loader)
+    dataset = BatFileDataSet(spectrograms_path, labels_path, filename_column="Filename", text_column="label")
     train_loader = tqdm(DataLoader(dataset, config.batch_size, shuffle=True, collate_fn=collate_fn), desc="Loading Data")
 
     # Initialize Model & Train

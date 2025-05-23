@@ -5,7 +5,7 @@ import shutil as sh
 from collections import defaultdict
 from tqdm import tqdm
 
-from TrainingClasses import bat_species, eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally
+from TrainingClasses import eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally
 
 
 class SplitSet:
