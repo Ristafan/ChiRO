@@ -2,6 +2,7 @@
 files_path_root = "D:/Bachelorarbeit/AgroscopeData/LabelledSequences"
 original_files_and_labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged.xlsx"
 train_files_and_labels_path_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Alpha/train_dataset_info.xlsx"
+train_files_and_labels_path_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Beta/train_dataset_info.xlsx"
 train_files_and_labels_path_alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"
 
 
@@ -13,3 +14,4 @@ alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Alpha"
 alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/AlphaBeta"
 beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Beta"
 gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Gamma"
+detection_model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Batdetect2/Net2DFast_UK_same.pth.tar"
