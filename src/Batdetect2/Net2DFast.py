@@ -3,7 +3,7 @@ import torch.fft
 import torch.nn.functional as F
 from torch import nn
 
-from model_helpers import (
+from src.Batdetect2.model_helpers import (
     ConvBlockDownCoordF,
     ConvBlockDownStandard,
     ConvBlockUpF,
@@ -11,10 +11,6 @@ from model_helpers import (
     SelfAttention,
 )
 from src.Batdetect2.types import ModelOutput
-
-__all__ = [
-    "Net2DFast",
-]
 
 
 class Net2DFast(nn.Module):

@@ -13,10 +13,10 @@ try:
 except ImportError:
     from numpy import AxisError  # type: ignore
 
-import compute_features as feats
-import post_process as pp
-import audio_utils as au
-from parameters import DEFAULT_MODEL_PATH
+import src.Batdetect2.compute_features as feats
+import src.Batdetect2.post_process as pp
+import src.Batdetect2.audio_utils as au
+from src.Batdetect2.parameters import DEFAULT_MODEL_PATH
 from src.Batdetect2.types import (
     Annotation,
     DetectionModel,

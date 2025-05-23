@@ -6,7 +6,7 @@ import librosa.core.spectrum
 import numpy as np
 import torch
 
-import parameters
+import src.Batdetect2.parameters
 
 from src.Batdetect2 import wavfile
 
@@ -19,9 +19,9 @@ __all__ = [
 
 def time_to_x_coords(
         time_in_file: float,
-        samplerate: float = parameters.TARGET_SAMPLERATE_HZ,
-        window_duration: float = parameters.FFT_WIN_LENGTH_S,
-        window_overlap: float = parameters.FFT_OVERLAP,
+        samplerate: float = src.Batdetect2.parameters.TARGET_SAMPLERATE_HZ,
+        window_duration: float = src.Batdetect2.parameters.FFT_WIN_LENGTH_S,
+        window_overlap: float = src.Batdetect2.parameters.FFT_OVERLAP,
 ) -> float:
     nfft = np.floor(window_duration * samplerate)  # int() uses floor
     noverlap = np.floor(window_overlap * nfft)
@@ -30,9 +30,9 @@ def time_to_x_coords(
 
 def x_coords_to_time(
         x_pos: int,
-        samplerate: float = parameters.TARGET_SAMPLERATE_HZ,
-        window_duration: float = parameters.FFT_WIN_LENGTH_S,
-        window_overlap: float = parameters.FFT_OVERLAP,
+        samplerate: float = src.Batdetect2.parameters.TARGET_SAMPLERATE_HZ,
+        window_duration: float = src.Batdetect2.parameters.FFT_WIN_LENGTH_S,
+        window_overlap: float = src.Batdetect2.parameters.FFT_OVERLAP,
 ) -> float:
     n_fft = np.floor(window_duration * samplerate)
     n_overlap = np.floor(window_overlap * n_fft)
@@ -43,10 +43,10 @@ def x_coords_to_time(
 
 def x_coord_to_sample(
         x_pos: int,
-        samplerate: float = parameters.TARGET_SAMPLERATE_HZ,
-        window_duration: float = parameters.FFT_WIN_LENGTH_S,
-        window_overlap: float = parameters.FFT_OVERLAP,
-        resize_factor: float = parameters.RESIZE_FACTOR,
+        samplerate: float = src.Batdetect2.parameters.TARGET_SAMPLERATE_HZ,
+        window_duration: float = src.Batdetect2.parameters.FFT_WIN_LENGTH_S,
+        window_overlap: float = src.Batdetect2.parameters.FFT_OVERLAP,
+        resize_factor: float = src.Batdetect2.parameters.RESIZE_FACTOR,
 ) -> int:
     n_fft = np.floor(window_duration * samplerate)
     n_overlap = np.floor(window_overlap * n_fft)
@@ -212,10 +212,10 @@ def load_audio(
 
 def compute_spectrogram_width(
         length: int,
-        samplerate: int = parameters.TARGET_SAMPLERATE_HZ,
-        window_duration: float = parameters.FFT_WIN_LENGTH_S,
-        window_overlap: float = parameters.FFT_OVERLAP,
-        resize_factor: float = parameters.RESIZE_FACTOR,
+        samplerate: int = src.Batdetect2.parameters.TARGET_SAMPLERATE_HZ,
+        window_duration: float = src.Batdetect2.parameters.FFT_WIN_LENGTH_S,
+        window_overlap: float = src.Batdetect2.parameters.FFT_OVERLAP,
+        resize_factor: float = src.Batdetect2.parameters.RESIZE_FACTOR,
 ) -> int:
     n_fft = int(window_duration * samplerate)
     n_overlap = int(window_overlap * n_fft)
@@ -226,11 +226,11 @@ def compute_spectrogram_width(
 
 def pad_audio(
         audio: np.ndarray,
-        samplerate: int = parameters.TARGET_SAMPLERATE_HZ,
-        window_duration: float = parameters.FFT_WIN_LENGTH_S,
-        window_overlap: float = parameters.FFT_OVERLAP,
-        resize_factor: float = parameters.RESIZE_FACTOR,
-        divide_factor: int = parameters.SPEC_DIVIDE_FACTOR,
+        samplerate: int = src.Batdetect2.parameters.TARGET_SAMPLERATE_HZ,
+        window_duration: float = src.Batdetect2.parameters.FFT_WIN_LENGTH_S,
+        window_overlap: float = src.Batdetect2.parameters.FFT_OVERLAP,
+        resize_factor: float = src.Batdetect2.parameters.RESIZE_FACTOR,
+        divide_factor: int = src.Batdetect2.parameters.SPEC_DIVIDE_FACTOR,
         fixed_width: Optional[int] = None,
 ):
     """Pad audio to be evenly divisible by `divide_factor`.

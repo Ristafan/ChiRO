@@ -4,12 +4,12 @@ import os
 
 from tqdm import tqdm
 
-from model import Net2DFast
-from parameters import TARGET_SAMPLERATE_HZ, FFT_WIN_LENGTH_S, FFT_OVERLAP, RESIZE_FACTOR, \
+from src.Batdetect2.Net2DFast import Net2DFast
+from src.Batdetect2.parameters import TARGET_SAMPLERATE_HZ, FFT_WIN_LENGTH_S, FFT_OVERLAP, RESIZE_FACTOR, \
     SPEC_DIVIDE_FACTOR, SPEC_HEIGHT, SCALE_RAW_AUDIO, NMS_KERNEL_SIZE, MAX_FREQ_HZ, MIN_FREQ_HZ, NMS_TOP_K_PER_SEC, \
     SPEC_SCALE, DENOISE_SPEC_AVG, MAX_SCALE_SPEC
 from src.Batdetect2.types import ProcessingConfiguration
-from detector_utils import process_file
+from src.Batdetect2.detector_utils import process_file
 
 
 class CallsDetector:
@@ -123,7 +123,7 @@ class CallsDetector:
             }
         )
 
-        for file in tqdm(self.filepaths, desc="Processing files", unit="file"):
+        for file in tqdm(self.filepaths, desc="Detecting Calls", unit="file"):
             if file.lower().endswith('.wav'):
                 prediction = process_file(file, self.model, processing_configuration, self.device)
                 self.start_times[file] = prediction["start_times"]

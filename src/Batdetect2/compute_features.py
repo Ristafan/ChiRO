@@ -4,7 +4,7 @@ from typing import Dict, Optional
 import numpy as np
 
 from src.Batdetect2.types import Prediction, PredictionResults, FeatureExtractor, FeatureExtractionParameters
-from parameters import MAX_FREQ_HZ, MIN_FREQ_HZ
+from src.Batdetect2.parameters import MAX_FREQ_HZ, MIN_FREQ_HZ
 
 
 def convert_int_to_freq(spec_ind, spec_height, min_freq, max_freq):

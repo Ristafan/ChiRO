@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from model import ModelOutput
+from src.Batdetect2.Net2DFast import ModelOutput
 from src.Batdetect2.types import NonMaximumSuppressionConfig, PredictionResults
 
 np.seterr(divide="ignore", invalid="ignore")
