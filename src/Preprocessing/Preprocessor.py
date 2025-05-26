@@ -54,6 +54,7 @@ class Preprocessor:
             sp.apply_highpass_filter()
             sp.compute_spectrogram()
             sp.denoise_spectrogram()
+            sp.scale_to_db()
             sp.save_spectrogram(f'{names[i]}', self.spectrograms_path + '/')
 
     def create_bat_file_dataset(self):

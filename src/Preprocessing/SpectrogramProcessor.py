@@ -1,3 +1,5 @@
+from torchaudio.transforms import AmplitudeToDB
+
 from src.Logging.Logger import Logger
 import torch
 import torchaudio.transforms as T
@@ -54,6 +56,10 @@ class SpectrogramProcessor:
         spectrogram_gpu = transform(self.waveform)
         self.spectrogram = spectrogram_gpu.cpu()
         return self.spectrogram
+
+    def scale_to_db(self, top_db=80.0):
+        transform = AmplitudeToDB(stype="power", top_db=top_db)
+        self.spectrogram = transform(self.spectrogram.unsqueeze(0)).squeeze(0)
 
     def denoise_spectrogram(self):
         """
@@ -123,7 +129,8 @@ if __name__ == '__main__':
     s.apply_highpass_filter()
     s.compute_spectrogram()
     print(s.spectrogram.shape)
-    #s.denoise_spectrogram()
+    s.denoise_spectrogram()
+    s.scale_to_db()
     s.plot_new()
 
 #    for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
