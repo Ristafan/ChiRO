@@ -7,7 +7,7 @@ from tqdm import tqdm
 from src.Batdetect2.Net2DFast import Net2DFast
 from src.Batdetect2.parameters import TARGET_SAMPLERATE_HZ, FFT_WIN_LENGTH_S, FFT_OVERLAP, RESIZE_FACTOR, \
     SPEC_DIVIDE_FACTOR, SPEC_HEIGHT, SCALE_RAW_AUDIO, NMS_KERNEL_SIZE, MAX_FREQ_HZ, MIN_FREQ_HZ, NMS_TOP_K_PER_SEC, \
-    SPEC_SCALE, DENOISE_SPEC_AVG, MAX_SCALE_SPEC
+    SPEC_SCALE, DENOISE_SPEC_AVG, MAX_SCALE_SPEC, DETECTION_THRESHOLD
 from src.Batdetect2.types import ProcessingConfiguration
 from src.Batdetect2.detector_utils import process_file
 
@@ -88,10 +88,6 @@ class CallsDetector:
         df.to_excel(self.labels_path, index=False)
 
     def predict_set(self):
-
-        DETECTION_THRESHOLD = 0.5
-        TARGET_SAMPLERATE_HZ = 192000
-
         processing_configuration = ProcessingConfiguration(
             {
                 "detection_threshold": DETECTION_THRESHOLD,
