@@ -3,21 +3,21 @@ import os
 
 from src.Batdetect2.types import SpectrogramParameters, ProcessingConfiguration
 
-TARGET_SAMPLERATE_HZ = 256000
-FFT_WIN_LENGTH_S = 512 / 256000.0
-FFT_OVERLAP = 0.75
-MAX_FREQ_HZ = 120000
-MIN_FREQ_HZ = 10000
-RESIZE_FACTOR = 0.5
-SPEC_DIVIDE_FACTOR = 32
-SPEC_HEIGHT = 256
-SCALE_RAW_AUDIO = False
-DETECTION_THRESHOLD = 0.01
-NMS_KERNEL_SIZE = 9
-NMS_TOP_K_PER_SEC = 200
-SPEC_SCALE = "pcen"
-DENOISE_SPEC_AVG = True
-MAX_SCALE_SPEC = False
+TARGET_SAMPLERATE_HZ = 192000       # Original value: 256000
+FFT_WIN_LENGTH_S = 2048 / 192000.0  # Original value: 512 / 256000.0
+FFT_OVERLAP = 0.5                   # Original value: 0.75
+MAX_FREQ_HZ = 120000                # Original value: 120000
+MIN_FREQ_HZ = 10000                 # Original value: 10000
+RESIZE_FACTOR = 0.5                 # Original value: 0.5
+SPEC_DIVIDE_FACTOR = 32             # Original value: 32
+SPEC_HEIGHT = 256                   # Original value: 256
+SCALE_RAW_AUDIO = False             # Original value: False
+DETECTION_THRESHOLD = 0.3          # Original value: 0.01
+NMS_KERNEL_SIZE = 9                 # Original value: 9
+NMS_TOP_K_PER_SEC = 200             # Original value: 200
+SPEC_SCALE = "pcen"                 # Original value: "pcen"
+DENOISE_SPEC_AVG = True             # Original value: True
+MAX_SCALE_SPEC = False              # Original value: False
 
 
 DEFAULT_MODEL_PATH = os.path.join(
