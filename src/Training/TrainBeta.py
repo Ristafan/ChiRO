@@ -101,9 +101,9 @@ def collate_fn(batch):
 
 if __name__ == '__main__':
     # Define whether spectrograms are already computed
-    splits_aleady_computed = True
+    splits_aleady_computed = False
     spectrogram_already_computed = False
-    calls_already_detected = True
+    calls_already_detected = False
 
     # Load configuration paths
     config = load_config()
@@ -123,9 +123,9 @@ if __name__ == '__main__':
         job_type="training",
         config={
             "notes": "",
-            "learning_rate": 0.001,
+            "learning_rate": 0.01,
             "dataset": "BatCalls",
-            "num_epochs": 5,
+            "num_epochs": 1,
             "batch_size": 1,
             "model": "BetaV1",
             "model_name": f"betaV2_separable_{datetime.now().strftime('%H-%M-%S')}.pth",
