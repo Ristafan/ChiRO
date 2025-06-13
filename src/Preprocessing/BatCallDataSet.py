@@ -1,8 +1,24 @@
+import json
 import os
+import time
 
 import torch
 from torch.utils.data import Dataset
 import pandas as pd
+import matplotlib.pyplot as plt
+from torchaudio.transforms import AmplitudeToDB
+
+
+def plot_spectrogram(spectrogram):
+
+    plt.figure(figsize=(10, 4))
+    plt.imshow(spectrogram.squeeze(0).numpy(), aspect='auto', origin='lower')
+    plt.colorbar(format='%+2.0f dB')
+    plt.title('Spectrogram')
+    plt.xlabel('Time (frames)')
+    plt.ylabel('Frequency (bins)')
+    plt.tight_layout()
+    plt.show()
 
 
 class BatCallDataSet(Dataset):
@@ -48,9 +64,11 @@ class BatCallDataSet(Dataset):
         spectrogram = spectrogram.unsqueeze(0)  # Ensure correct shape: [1, height, width]
 
         # Cut the spectrogram to the start and end times
-        start_time = self.start_times[filename_with_call_index]
-        end_time = self.end_times[filename_with_call_index]
-        spectrogram = spectrogram[:, start_time:end_time, :]
+        start_frame = self.start_times[filename_with_call_index]
+        end_frame = self.end_times[filename_with_call_index]
+        print("Spectrogram shape before slicing:", spectrogram.shape)
+        spectrogram = spectrogram[:, start_frame:end_frame, :]
+        print("Spectrogram shape after slicing:", spectrogram.shape)
 
         label = torch.tensor(self.labels[filename_with_call_index.split("-")[0]], dtype=torch.long)
 
@@ -80,12 +98,16 @@ class BatCallDataSet(Dataset):
                     start_time = []
                 else:
                     start_time = start_time.strip("[]").split(" ")
+                    start_time = [t for t in start_time if t != ""]
                     start_time = [self.convert_time_to_frames(float(t)) for t in start_time]
+
             if isinstance(end_time, str):
                 if end_time == "[]":
-                    end_time = [self.convert_time_to_frames(float(t)) for t in end_time]
+                    end_time = []
                 else:
                     end_time = end_time.strip("[]").split(" ")
+                    end_time = [t for t in end_time if t != ""]
+                    end_time = [self.convert_time_to_frames(float(t)) for t in end_time]
 
             self.start_times[filename] = start_time
             self.end_times[filename] = end_time
@@ -94,7 +116,7 @@ class BatCallDataSet(Dataset):
     def convert_time_to_frames(time, sample_rate=192000, win_length=2048, hop_length=None):
         if hop_length is None:
             hop_length = win_length // 2
-        return int(time * sample_rate / hop_length)
+        return int(time * sample_rate / hop_length) - int(win_length / hop_length)
 
     def create_filenames_with_calls(self):
         for filename in self.filenames:
@@ -105,3 +127,83 @@ class BatCallDataSet(Dataset):
                     self.start_times[f"{filename}-{idx}"] = self.start_times[filename][i]
                     self.end_times[f"{filename}-{idx}"] = self.end_times[filename][i]
                     idx += 1
+
+
+def plot_dataset_item(dataset: BatCallDataSet, idx: int):
+    """
+    Plot the full spectrogram for item idx with the call region highlighted,
+    and then plot just the extracted slice.
+
+    :param dataset: your BatCallDataSet instance
+    :param idx: index into dataset
+    """
+    # 1. Figure out which file & call this is
+    key = dataset.filenames_with_calls[idx]          # e.g. "20210712_233400-0"
+    base_fname = key.split("-")[0]                   # e.g. "20210712_233400"
+    spec_path = os.path.join(dataset.spectrogram_dir,
+                             f"spectrogram_{base_fname}.pt")
+
+    # 2. Load the full spectrogram
+    full_spec = torch.load(spec_path)                # [1,H,W] or [H,W]
+    if full_spec.dim() == 3:
+        full_spec = full_spec.squeeze(0)             # [H,W]
+
+    # 3. Get the slice indices
+    start = int(dataset.start_times[key])
+    end = int(dataset.end_times[key])
+
+    # transform = AmplitudeToDB(stype="power", top_db=80)
+    # spec_db = transform(full_spec.unsqueeze(0)).squeeze(0)
+
+    # 4. Plot the full spectrogram
+    plt.figure(figsize=(12, 4))
+    # plt.imshow(spec_db.numpy(), aspect="auto", origin="lower", cmap="magma")
+    plt.imshow(full_spec.numpy(), aspect="auto", origin="lower")
+    plt.axvline(start, color="r", linestyle="--", label="start")
+    plt.axvline(end,   color="r", linestyle="-.", label="end")
+    plt.title(f"Full spectrogram: {base_fname} (item {idx})")
+    plt.xlabel("Time frames")
+    plt.ylabel("Frequency bins")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # 5. Plot just the slice
+    # slice_spec = spec_db[:, start:end]
+    slice_spec = full_spec[:, start:end]
+    plt.figure(figsize=(8, 4))
+    plt.imshow(slice_spec.numpy(), aspect="auto", origin="lower")
+    plt.title(f"Sliced spectrogram: frames {start}–{end}")
+    plt.xlabel("Time frames (slice)")
+    plt.ylabel("Frequency bins")
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    # Example usage
+    spectrogram_dir = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/spectrograms"
+    labels_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Beta/train_dataset_info.xlsx"
+
+    dataset = BatCallDataSet(spectrogram_dir, labels_path, "Filename", "label")
+    print(f"Total samples: {len(dataset)}")
+
+    # Access a sample
+    spectrogram, label = dataset[2]
+    print(f"Spectrogram shape: {spectrogram.shape}, Label: {label}")
+
+    # Plot calls from specific file
+    filename = "20220617_224400T #0002_1c1b59d86384197e22d3eec015a33ede"
+    calls = []
+    for call in dataset.filenames_with_calls:
+        if call.startswith(filename):
+            calls.append(call)
+
+    # Plot all calls for the specified file
+    for call in calls:
+        time.sleep(0.1)
+        plot_dataset_item(dataset, dataset.filenames_with_calls.index(call))
+
+    # Plot some dataset items
+    # for i in range(6, 10):
+    #     plot_dataset_item(dataset, i)
