@@ -1,4 +1,7 @@
+import numpy as np
+from scipy.ndimage import median_filter
 from torchaudio.transforms import AmplitudeToDB
+import numpy as np
 
 from src.Logging.Logger import Logger
 import torch
@@ -61,7 +64,7 @@ class SpectrogramProcessor:
         transform = AmplitudeToDB(stype="power", top_db=top_db)
         self.spectrogram = transform(self.spectrogram.unsqueeze(0)).squeeze(0)
 
-    def denoise_spectrogram(self):
+    def denoise_spectrogram_mean_subtraction(self):
         """
         Removes noise by subtracting the mean amplitude from each frequency bin.
         Assumes spectrogram is already computed and is on the CPU.
@@ -72,6 +75,67 @@ class SpectrogramProcessor:
         # Compute the mean amplitude per frequency bin and subtract it
         mean_per_freq = self.spectrogram.mean(dim=-1, keepdim=True)
         self.spectrogram = self.spectrogram - mean_per_freq
+        return self.spectrogram
+
+    def denoise_spectrogram_median_filter(self, kernel_size=(3, 3)):
+        """
+        Applies a 2D median filter to the spectrogram. This is an image processing
+        technique effective at removing impulsive noise ('salt-and-pepper' like noise)
+        and smoothing out isolated bright or dark speckles on the spectrogram,
+        while generally preserving edges (like the distinct contours of bat calls).
+        Correctly handles both 2D and 3D (batch) spectrograms by iterating over the batch dimension.
+
+        Note: This method is significantly more efficient with NumPy arrays due to
+        `scipy.ndimage.median_filter`. If your spectrogram is a PyTorch tensor,
+        it will be temporarily converted to NumPy for processing and then converted back.
+
+        Args:
+            kernel_size (tuple): A 2-element tuple (height, width) specifying the
+                                 dimensions of the median filter window.
+                                 It's highly recommended that kernel dimensions are odd (e.g., (3,3), (5,5)).
+        """
+        if self.spectrogram is None:
+            raise ValueError("Spectrogram has not been computed yet.")
+        if len(kernel_size) != 2:
+            raise ValueError("kernel_size must be a 2-element tuple (height, width).")
+        if not all(k % 2 == 1 for k in kernel_size):
+            print(f"Warning: It is recommended to use odd kernel sizes for median filter. Current: {kernel_size}")
+
+        if isinstance(self.spectrogram, torch.Tensor):
+            print("Converting PyTorch tensor to NumPy array for median filtering (scipy.ndimage.median_filter).")
+            # Move tensor to CPU and convert to NumPy array
+            np_spectrogram = self.spectrogram.cpu().numpy()
+
+            if np_spectrogram.ndim == 3:
+                # If 3D (batch, freq, time), apply filter to each 2D slice
+                denoised_slices = []
+                for i in range(np_spectrogram.shape[0]):
+                    denoised_slices.append(median_filter(np_spectrogram[i], size=kernel_size))
+                denoised_np_spectrogram = np.stack(denoised_slices, axis=0)
+            elif np_spectrogram.ndim == 2:
+                # If 2D (freq, time), apply filter directly
+                denoised_np_spectrogram = median_filter(np_spectrogram, size=kernel_size)
+            else:
+                raise ValueError("Spectrogram must be 2D or 3D to apply median filter.")
+
+            # Convert back to PyTorch tensor and move to original device
+            self.spectrogram = torch.from_numpy(denoised_np_spectrogram).to(self.spectrogram.device)
+
+        elif isinstance(self.spectrogram, np.ndarray):
+            if self.spectrogram.ndim == 3:
+                # If 3D (batch, freq, time), apply filter to each 2D slice
+                denoised_slices = []
+                for i in range(self.spectrogram.shape[0]):
+                    denoised_slices.append(median_filter(self.spectrogram[i], size=kernel_size))
+                self.spectrogram = np.stack(denoised_slices, axis=0)
+            elif self.spectrogram.ndim == 2:
+                # If 2D (freq, time), apply filter directly
+                self.spectrogram = median_filter(self.spectrogram, size=kernel_size)
+            else:
+                raise ValueError("Spectrogram must be 2D or 3D to apply median filter.")
+        else:
+            raise TypeError("Unsupported spectrogram type. Must be numpy.ndarray or torch.Tensor.")
+
         return self.spectrogram
 
     def save_spectrogram(self, name, save_path="C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms/"):
@@ -128,8 +192,11 @@ if __name__ == '__main__':
     s = SpectrogramProcessor(waveform)
     s.apply_highpass_filter()
     s.compute_spectrogram()
+    s.plot_new()
+    #s.compute_mel_spectrogram()
     print(s.spectrogram.shape)
-    s.denoise_spectrogram()
+    s.denoise_spectrogram_mean_subtraction()
+    #s.denoise_spectrogram_median_filter(kernel_size=(5, 5))
     s.scale_to_db()
     s.plot_new()
 
