@@ -28,7 +28,7 @@ class Preprocessor:
         split_set.set_ignored_labels(ignored_labels)
         split_set.read_data("File", "Verification 1", "location")
         split_set.select_split_method(split_method)
-        split_set.select_split_ratio(train_ratio, test_ratio, 1 - train_ratio - test_ratio)
+        split_set.select_split_ratio(train_ratio, 1 - train_ratio - test_ratio, test_ratio)
 
         if use_min_files_per_class:
             # Using minimum files per class
