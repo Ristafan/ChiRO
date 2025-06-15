@@ -1,4 +1,7 @@
+import os
+
 import numpy as np
+import torchaudio
 from scipy.ndimage import median_filter
 from torchaudio.transforms import AmplitudeToDB
 import numpy as np
@@ -187,16 +190,16 @@ class SpectrogramProcessor:
 
 
 if __name__ == '__main__':
-    waveform, sample_rate = AudioLoader().load_wav_file('C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train/20210712_233400T #0001_3f259123805e9cfb6706af0899348593.wav')
+    waveform, sample_rate = AudioLoader().load_wav_file('C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train/20220630_221300T #0002_645fbdba0181f0367e9570e949180e4b.wav')
 
     s = SpectrogramProcessor(waveform)
     s.apply_highpass_filter()
     s.compute_spectrogram()
     s.plot_new()
-    #s.compute_mel_spectrogram()
+    # s.compute_mel_spectrogram()
     print(s.spectrogram.shape)
     s.denoise_spectrogram_mean_subtraction()
-    #s.denoise_spectrogram_median_filter(kernel_size=(5, 5))
+    # s.denoise_spectrogram_median_filter(kernel_size=(5, 5))
     s.scale_to_db()
     s.plot_new()
 
