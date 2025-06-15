@@ -176,7 +176,7 @@ def collate_fn(batch, noise_label=7):
     return spectrograms, labels
 
 
-if __name__ == '__main__':
+def main():
     # Define whether spectrograms are already computed
     splits_already_computed = True
     spectrogram_already_computed = True

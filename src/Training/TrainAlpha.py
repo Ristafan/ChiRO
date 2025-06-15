@@ -104,7 +104,7 @@ def collate_fn(batch):
     return spectrograms, labels
 
 
-if __name__ == '__main__':
+def main():
     # Load configuration paths
     config = load_config()
     train_files_and_labels_path = config['dataset']['train_files_and_labels_path_alpha']
