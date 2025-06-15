@@ -41,7 +41,7 @@ class Preprocessor:
         split_set.export_to_excel(os.path.dirname(self.files_and_labels_path))
         return noise_label
 
-    def create_spectrograms(self):
+    def create_spectrograms_stft(self, highpass_cutoff_freq=16000, n_fft=4096, hop_length=None, win_length=2048, denois_option="mean_subtraction"):
         # Load Audio Files and create spectrograms
         audio_loader = AudioLoader()
         audio_loader.load_audio_from_exel(self.files_and_labels_path)
@@ -51,9 +51,14 @@ class Preprocessor:
         # Create Spectrograms
         for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
             sp = SpectrogramProcessor(waveforms[i])
-            sp.apply_highpass_filter()
-            sp.compute_spectrogram()
-            sp.denoise_spectrogram()
+            sp.apply_highpass_filter(highpass_cutoff_freq)
+            sp.compute_spectrogram(n_fft, hop_length, win_length)
+
+            if denois_option == "mean_subtraction":
+                sp.denoise_spectrogram_mean_subtraction()
+            elif denois_option == "medain_filter":
+                sp.denoise_spectrogram_median_filter()
+
             sp.scale_to_db()
             sp.save_spectrogram(f'{names[i]}', self.spectrograms_path + '/')
 

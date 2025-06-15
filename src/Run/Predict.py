@@ -37,7 +37,7 @@ class Predictor():
         spectrogram_processor = SpectrogramProcessor(waveform)
         spectrogram_processor.apply_highpass_filter()
         spectrogram_processor.compute_spectrogram()
-        spectrogram_processor.denoise_spectrogram()
+        spectrogram_processor.denoise_spectrogram_mean_subtraction()
         spectrogram = spectrogram_processor.spectrogram
 
         # Load the model

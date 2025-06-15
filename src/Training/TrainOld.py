@@ -108,7 +108,7 @@ if __name__ == '__main__':
             sp.apply_highpass_filter()
             sp.compute_spectrogram()
             sp.compute_mel_spectrogram()
-            sp.denoise_spectrogram()
+            sp.denoise_spectrogram_mean_subtraction()
             sp.save_spectrogram(f'{names[i]}', spectrograms_path + '/')
 
 

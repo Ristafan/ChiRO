@@ -6,8 +6,7 @@ from src.Logging.Logger import Logger
 import torch
 
 from src.Preprocessing.AudioLoader import AudioLoader
-from src.Preprocessing.BatCallDataset import BatCallDataset
-from src.Preprocessing.LabelsLoader import LabelsLoader
+from src.Preprocessing.BatFileDataSet import BatFileDataSet
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
 
 
@@ -51,7 +50,7 @@ class Test:
                 spectrogram_processor = SpectrogramProcessor(data[i])
                 spectrogram_processor.apply_highpass_filter()
                 spectrogram_processor.compute_spectrogram()
-                spectrogram_processor.denoise_spectrogram()
+                spectrogram_processor.denoise_spectrogram_mean_subtraction()
                 spectrogram_processor.save_spectrogram(f'{data_loader.get_file_names()[i]}', self.data_path + '/TestSpectrograms/')
 
         # Load the labels
@@ -59,7 +58,7 @@ class Test:
         labels_loader.load_labels_excel()
 
         # Load the spectrogram
-        dataset = BatCallDataset(self.data_path + '/TestSpectrograms/', labels_loader)
+        dataset = BatFileDataSet(self.data_path + '/TestSpectrograms/', labels_loader)
 
         # Make predictions
         self.model.eval()

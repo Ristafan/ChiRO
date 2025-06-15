@@ -228,7 +228,7 @@ if __name__ == '__main__':
     print(f"Noise label: {noise_label}")
 
     if not spectrogram_already_computed:
-        preprocessor.create_spectrograms()
+        preprocessor.create_spectrograms_stft()
 
     train_dataset = preprocessor.create_bat_call_dataset()
 

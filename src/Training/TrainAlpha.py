@@ -10,6 +10,9 @@ from datetime import datetime
 from src.DataSetSplit.TrainingClasses import bat_species
 from src.Preprocessing.Preprocessor import Preprocessor
 from src.Architectures.AlphaV2 import AlphaV2
+from src.Training.TrainingParams import SPLITS_ALREADY_COMPUTED, SPECTROGRAMS_ALREADY_COMPUTED, USE_MIN_FILES_PER_CLASS, \
+    TOTAL_FILES_PER_CLASS, IGNORED_LABELS, MERGE_LABELS, SPLIT_METHOD, TRAIN_RATIO, TEST_RATIO, SEED, LEARNING_RATE, \
+    DATASET_NAME, NUM_EPOCHS, BATCH_SIZE, MODEL, MODEL_NAME, WANDB_API_KEY
 from src.utils import load_config
 
 # Set memory allocation configuration
@@ -102,10 +105,6 @@ def collate_fn(batch):
 
 
 if __name__ == '__main__':
-    # Define whether spectrograms are already computed
-    splits_aleady_computed = False
-    spectrogram_already_computed = False
-
     # Load configuration paths
     config = load_config()
     train_files_and_labels_path = config['dataset']['train_files_and_labels_path_alpha']
@@ -114,7 +113,7 @@ if __name__ == '__main__':
     spectrograms_path = config['spectrogram']['spectrograms_dir']
     model_path = config['model']['alpha']
 
-    wandb.login(key="32b08e4c860b935b2cd9c30774889b952ffefe0d")
+    wandb.login(key=WANDB_API_KEY)
 
     run = wandb.init(
         project="ChiRO",
@@ -122,12 +121,12 @@ if __name__ == '__main__':
         job_type="training",
         config={
             "notes": "",
-            "learning_rate": 0.001,
-            "dataset": "BatCalls-Environment",
-            "num_epochs": 2,
-            "batch_size": 2,
-            "model": "AlphaV2",
-            "model_name": f"alphaV2_{datetime.now().strftime('%H-%M-%S')}.pth",
+            "learning_rate": LEARNING_RATE,
+            "dataset": DATASET_NAME,
+            "num_epochs": NUM_EPOCHS,
+            "batch_size": BATCH_SIZE,
+            "model": MODEL,
+            "model_name": MODEL_NAME,
         },
     )
 
@@ -136,19 +135,19 @@ if __name__ == '__main__':
     # Load Audio Files, Labels and create spectrograms
     preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
 
-    if not splits_aleady_computed:
+    if not SPLITS_ALREADY_COMPUTED:
         _ = preprocessor.create_data_splits(original_files_and_labels_path,
-                                                  use_min_files_per_class=True,
-                                                  total_files_per_class=100,
-                                                  ignored_labels=None,
-                                                  merge_labels=[bat_species],
-                                                  split_method="balanced",
-                                                  train_ratio=0.7,
-                                                  test_ratio=0.2,
-                                                  seed=42)
+                                                  use_min_files_per_class=USE_MIN_FILES_PER_CLASS,
+                                                  total_files_per_class=TOTAL_FILES_PER_CLASS,
+                                                  ignored_labels=IGNORED_LABELS,
+                                                  merge_labels=MERGE_LABELS,
+                                                  split_method=SPLIT_METHOD,
+                                                  train_ratio=TRAIN_RATIO,
+                                                  test_ratio=TEST_RATIO,
+                                                  seed=SEED)
 
-    if not spectrogram_already_computed:
-        preprocessor.create_spectrograms()
+    if not SPECTROGRAMS_ALREADY_COMPUTED:
+        preprocessor.create_spectrograms_stft()
 
     train_dataset = preprocessor.create_bat_file_dataset()
 

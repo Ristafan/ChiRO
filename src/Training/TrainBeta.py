@@ -150,7 +150,7 @@ if __name__ == '__main__':
                                             seed=42)
 
     if not spectrogram_already_computed:
-        preprocessor.create_spectrograms()
+        preprocessor.create_spectrograms_stft()
 
     if not calls_already_detected:
         detector = CallsDetector(Net2DFast(num_filts=64), detection_model_path, train_files_and_labels_path)
