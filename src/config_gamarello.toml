@@ -1,12 +1,12 @@
 [dataset]
-files_path_root = "/agsad/f60047174/Data-Raw/27_Natural_Resources-RE/274_AGBI_protect-w/2744_AgrarLand/27443_Massnahmen/Agro4esterie_2020_2028/Work/Ecology/AudioMoth/Recording_Data/Samples_Martin/LabelledSequences"
-original_files_and_labels_path = "/agsad/f60047174/Data-Raw/27_Natural_Resources-RE/274_AGBI_protect-w/2744_AgrarLand/27443_Massnahmen/Agro4esterie_2020_2028/Work/Ecology/AudioMoth/Recording_Data/Samples_Martin/LabelledSequencesMerged.xlsx"
+files_path_root = "/cluster/raid/home/f60047174/data/LabelledSequences"
+original_files_and_labels_path = "/cluster/raid/home/f60047174/data/LabelledSequencesMerged.xlsx"
 train_files_and_labels_path_alpha = "/cluster/raid/home/f60047174/ChiRO/data/Alpha/train_dataset_info.xlsx"
 train_files_and_labels_path_beta = "/cluster/raid/home/f60047174/ChiRO/data/Beta/train_dataset_info.xlsx"
 train_files_and_labels_path_alpha_beta = "/cluster/raid/home/f60047174/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"
 
 [spectrogram]
-spectrograms_dir = "agsad/f60047174/Data-Raw/27_Natural_Resources-RE/274_AGBI_protect-w/2744_AgrarLand/27443_Massnahmen/Agro4esterie_2020_2028/Work/Ecology/AudioMoth/Recording_Data/Samples_Martin/spectrograms"
+spectrograms_dir = "/cluster/raid/home/f60047174/data/spectrograms"
 
 [model]
 alpha = "/cluster/raid/home/f60047174/ChiRO/src/models/Alpha"
