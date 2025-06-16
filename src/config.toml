@@ -5,7 +5,6 @@ train_files_and_labels_path_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/da
 train_files_and_labels_path_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Beta/train_dataset_info.xlsx"
 train_files_and_labels_path_alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"
 
-
 [spectrogram]
 spectrograms_dir = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/spectrograms"
 
