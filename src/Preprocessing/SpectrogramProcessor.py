@@ -1,4 +1,5 @@
 import os
+import time
 
 import numpy as np
 import torchaudio
@@ -31,7 +32,11 @@ class SpectrogramProcessor:
         Applies a high-pass filter to remove frequencies below 16 kHz.
         Useful for isolating bat echolocation calls.
         """
+        start_time = time.time()
+        print(f"    [HP Filter] Waveform device BEFORE: {self.waveform.device}", flush=True)
         self.waveform = F.highpass_biquad(self.waveform, sample_rate=self.sample_rate, cutoff_freq=cutoff_freq)
+        print(f"    [HP Filter] Waveform device AFTER: {self.waveform.device}", flush=True)
+        print(f"  SpectrogramProcessor.apply_highpass_filter time: {time.time() - start_time:.4f} seconds", flush=True)
 
     def compute_spectrogram(self, n_fft=4096, hop_length=None, win_length=2048):
         """
