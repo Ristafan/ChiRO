@@ -1,6 +1,9 @@
 from datetime import datetime
 from src.DataSetSplit.TrainingClasses import bat_species, bat_species_fixed
 
+# Device Parameters
+DEVICE = "cuda"     # Options: 'cuda' for GPU, 'cpu' for CPU
+
 # Preprocessing Progress
 SPLITS_ALREADY_COMPUTED = False
 SPECTROGRAMS_ALREADY_COMPUTED = False

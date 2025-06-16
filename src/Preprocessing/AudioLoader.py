@@ -7,19 +7,26 @@ import os
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
+from src.Training.TrainingParams import DEVICE
+
 
 class AudioLoader:
     def __init__(self):
         self.waveform = None
         self.sample_rate = None
         self.data = []
+        self.device = torch.device(DEVICE)
+        print(f"AudioLoader initialized for device: {self.device}", flush=True)
 
     def get_data(self):
         return self.data
 
     def load_wav_file(self, filepath):
         """Loads a single wav file."""
-        return torchaudio.load(filepath)
+        waveform, sample_rate = torchaudio.load(filepath)
+        waveform = waveform.to(self.device)
+
+        return waveform, sample_rate
 
     def load_folder(self, data_path):
         """Load all WAV files from the folder and store them in the list."""
