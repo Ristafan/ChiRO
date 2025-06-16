@@ -1,4 +1,5 @@
 import os
+import time
 
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -50,16 +51,29 @@ class Preprocessor:
 
         # Create Spectrograms
         for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
+            start_time = time.time()
             sp = SpectrogramProcessor(waveforms[i])
+            print(f"SpectrogramProcessor.SpectrogramProcessor: {time.time() - start_time:.4f} seconds")
+
+            start_time = time.time()
             sp.apply_highpass_filter(highpass_cutoff_freq)
+            print(f"SpectrogramProcessor.apply_highpass_filter time: {time.time() - start_time:.4f} seconds")
+
+            start_time = time.time()
             sp.compute_spectrogram(n_fft, hop_length, win_length)
+            print(f"SpectrogramProcessor.compute_spectrogram time: {time.time() - start_time:.4f} seconds")
 
             if denois_option == "mean_subtraction":
+                start_time = time.time()
                 sp.denoise_spectrogram_mean_subtraction()
+                print(f"SpectrogramProcessor.denoise_spectrogram_mean_subtraction time: {time.time() - start_time:.4f} seconds")
             elif denois_option == "medain_filter":
                 sp.denoise_spectrogram_median_filter()
 
+            start_time = time.time()
             sp.scale_to_db()
+            print(f"SpectrogramProcessor.scale_to_db time: {time.time() - start_time:.4f} seconds")
+
             sp.save_spectrogram(f'{names[i]}', self.spectrograms_path + '/')
 
     def create_bat_file_dataset(self):
