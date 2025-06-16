@@ -31,7 +31,7 @@ class SpectrogramProcessor:
         Applies a high-pass filter to remove frequencies below 16 kHz.
         Useful for isolating bat echolocation calls.
         """
-        self.waveform = F.highpass_biquad(self.waveform, sample_rate=self.sample_rate, cutoff_freq=cutoff_freq).cpu()
+        self.waveform = F.highpass_biquad(self.waveform, sample_rate=self.sample_rate, cutoff_freq=cutoff_freq)
 
     def compute_spectrogram(self, n_fft=4096, hop_length=None, win_length=2048):
         """
