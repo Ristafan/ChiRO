@@ -167,11 +167,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
             full_spectrograms_batch = full_spectrograms_batch.to(device)
             full_labels_batch = full_labels_batch.to(device)
 
-            # Convert to half precision for the full batch, if needed before cutting
-            # Note: The `cut_tensor_into_pieces` might return float32 if the input is float32
-            # We'll ensure sections are half() later.
-            # full_spectrograms_batch = full_spectrograms_batch.half() # Not strictly needed here, sections will be converted
-
             # --- Dynamic Cutting and Batching of Sections ---
 
             # This list will hold the actual sections and their corresponding labels and original IDs
@@ -225,9 +220,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
                 input_sections = torch.stack([s[0] for s in current_section_minibatch]).to(device)
                 target_labels = torch.stack([s[1] for s in current_section_minibatch]).to(device)
                 original_section_info = [(s[2], s[3]) for s in current_section_minibatch] # (orig_spec_idx, section_idx)
-
-                # Convert to half precision for sections right before model input
-                input_sections = input_sections.half()
 
                 optimizer.zero_grad()
 
