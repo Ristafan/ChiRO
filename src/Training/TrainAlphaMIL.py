@@ -339,7 +339,7 @@ def main():
         entity="martin-faehnrich-university-of-z-rich", # Replace with your entity
         job_type="training",
         config={
-            "notes": "Training with dynamic section filtering based on loss.",
+            "notes": "",
             "learning_rate": LEARNING_RATE,
             "dataset": DATASET_NAME,
             "num_epochs": NUM_EPOCHS,
