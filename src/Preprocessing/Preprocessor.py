@@ -50,7 +50,8 @@ class Preprocessor:
         names = audio_loader.get_file_names_from_excel(self.files_and_labels_path)
 
         # Create Spectrograms
-        for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms"):
+        print("Creating spectrograms...")
+        for i in range(len(waveforms)):
             start_time = time.time()
             sp = SpectrogramProcessor(waveforms[i])
             print(f"SpectrogramProcessor.SpectrogramProcessor: {time.time() - start_time:.4f} seconds")
@@ -74,7 +75,9 @@ class Preprocessor:
             sp.scale_to_db()
             print(f"SpectrogramProcessor.scale_to_db time: {time.time() - start_time:.4f} seconds")
 
+            start_time = time.time()
             sp.save_spectrogram(f'{names[i]}', self.spectrograms_path + '/')
+            print(f"SpectrogramProcessor.save_spectrogram time: {time.time() - start_time:.4f} seconds")
 
     def create_bat_file_dataset(self):
         return BatFileDataSet(self.spectrograms_path, self.files_and_labels_path, "Filename", "label")
