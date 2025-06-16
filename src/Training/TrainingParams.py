@@ -1,5 +1,5 @@
 from datetime import datetime
-from src.DataSetSplit.TrainingClasses import bat_species
+from src.DataSetSplit.TrainingClasses import bat_species, bat_species_fixed
 
 # Preprocessing Progress
 SPLITS_ALREADY_COMPUTED = False
@@ -10,7 +10,7 @@ DATASET_NAME = "BatCalls-Environment"
 USE_MIN_FILES_PER_CLASS = True
 TOTAL_FILES_PER_CLASS = 100
 IGNORED_LABELS = None                       # e.g., ['Chiroptera generally', 'Noise']
-MERGE_LABELS = [bat_species]                # e.g., ['Myotis', 'Plecotus']
+MERGE_LABELS = [bat_species_fixed]                # e.g., ['Myotis', 'Plecotus']
 SPLIT_METHOD = "balanced"                   # Options: 'balanced', 'random'
 TRAIN_RATIO = 0.7
 TEST_RATIO = 0.2                            # Validation ratio will be automatically calculated as 1 - train_ratio - test_ratio

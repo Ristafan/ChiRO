@@ -65,3 +65,32 @@ Chiroptera_generally = [
     "Plecotus austriacus",
     "Barbastella barbastellus",
 ]
+
+bat_species_fixed = [
+    "Barbastella_barbastellus",
+    "Chiroptera",
+    "Eptesicus_nilssonii",
+    "Eptesicus_serotinus",
+    "Hypsugo_savii",
+    "Miniopterus_schreibersii",
+    "Myotis_bechsteinii_or_Myotis_sp",
+    "Myotis_brandtii_or_Myotis mystacinus",
+    "Myotis_capaccinii_or_Myotis_daubentonii",
+    "Myotis_daubentonii",
+    "Myotis_daubentonii_or_Myotis_capaccinii",
+    "Myotis_emarginatus",
+    "Myotis_myotis",
+    "Myotis_nattereri",
+    "Myotis_sp",
+    "Nyctalus_leisleri",
+    "Nyctalus_noctula",
+    "Pipistrellus_kuhlii",
+    "Pipistrellus_kuhlii_or_Pipistrellus nathusii",
+    "Pipistrellus_nathusii_or_Pipistrellus kuhlii",
+    "Pipistrellus_nathusii",
+    "Pipistrellus_pipistrellus",
+    "Pipistrellus_pipistrellus_or_Pipistrellus_kuhlii",
+    "Pipistrellus_pygmaeus",
+    "Plecotus_austriacus",
+    "Vespertilio_murinus"
+]
