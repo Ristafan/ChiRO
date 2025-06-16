@@ -50,34 +50,34 @@ class Preprocessor:
         names = audio_loader.get_file_names_from_excel(self.files_and_labels_path)
 
         # Create Spectrograms
-        print("Creating spectrograms...")
+        print("Creating spectrograms...", flush=True)
         for i in range(len(waveforms)):
             start_time = time.time()
             sp = SpectrogramProcessor(waveforms[i])
-            print(f"SpectrogramProcessor.SpectrogramProcessor: {time.time() - start_time:.4f} seconds")
+            print(f"SpectrogramProcessor.SpectrogramProcessor: {time.time() - start_time:.4f} seconds", flush=True)
 
             start_time = time.time()
             sp.apply_highpass_filter(highpass_cutoff_freq)
-            print(f"SpectrogramProcessor.apply_highpass_filter time: {time.time() - start_time:.4f} seconds")
+            print(f"SpectrogramProcessor.apply_highpass_filter time: {time.time() - start_time:.4f} seconds", flush=True)
 
             start_time = time.time()
             sp.compute_spectrogram(n_fft, hop_length, win_length)
-            print(f"SpectrogramProcessor.compute_spectrogram time: {time.time() - start_time:.4f} seconds")
+            print(f"SpectrogramProcessor.compute_spectrogram time: {time.time() - start_time:.4f} seconds", flush=True)
 
             if denois_option == "mean_subtraction":
                 start_time = time.time()
                 sp.denoise_spectrogram_mean_subtraction()
-                print(f"SpectrogramProcessor.denoise_spectrogram_mean_subtraction time: {time.time() - start_time:.4f} seconds")
+                print(f"SpectrogramProcessor.denoise_spectrogram_mean_subtraction time: {time.time() - start_time:.4f} seconds", flush=True)
             elif denois_option == "medain_filter":
                 sp.denoise_spectrogram_median_filter()
 
             start_time = time.time()
             sp.scale_to_db()
-            print(f"SpectrogramProcessor.scale_to_db time: {time.time() - start_time:.4f} seconds")
+            print(f"SpectrogramProcessor.scale_to_db time: {time.time() - start_time:.4f} seconds", flush=True)
 
             start_time = time.time()
             sp.save_spectrogram(f'{names[i]}', self.spectrograms_path + '/')
-            print(f"SpectrogramProcessor.save_spectrogram time: {time.time() - start_time:.4f} seconds")
+            print(f"SpectrogramProcessor.save_spectrogram time: {time.time() - start_time:.4f} seconds", flush=True)
 
     def create_bat_file_dataset(self):
         return BatFileDataSet(self.spectrograms_path, self.files_and_labels_path, "Filename", "label")
