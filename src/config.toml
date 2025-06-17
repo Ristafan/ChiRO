@@ -1,6 +1,6 @@
 [dataset]
 files_path_root = "D:/Bachelorarbeit/AgroscopeData/LabelledSequences"
-original_files_and_labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged_cleaned_cleaned_cleaned.xlsx"
+original_files_and_labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged_cleaned_cleaned_cleaned_cleaned.xlsx"
 train_files_and_labels_path_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Alpha/train_dataset_info.xlsx"
 train_files_and_labels_path_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Beta/train_dataset_info.xlsx"
 train_files_and_labels_path_alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"

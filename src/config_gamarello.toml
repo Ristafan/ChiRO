@@ -1,6 +1,6 @@
 [dataset]
 files_path_root = "/cluster/raid/home/f60047174/data/LabelledSequences"
-original_files_and_labels_path = "/cluster/raid/home/f60047174/data/LabelledSequencesMerged_cleaned.xlsx"
+original_files_and_labels_path = "/cluster/raid/home/f60047174/data/LabelledSequencesMerged_cleaned_cleaned_cleaned_cleaned.xlsx"
 train_files_and_labels_path_alpha = "/cluster/raid/home/f60047174/ChiRO/data/Alpha/train_dataset_info.xlsx"
 train_files_and_labels_path_beta = "/cluster/raid/home/f60047174/ChiRO/data/Beta/train_dataset_info.xlsx"
 train_files_and_labels_path_alpha_beta = "/cluster/raid/home/f60047174/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"
