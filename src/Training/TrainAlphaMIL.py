@@ -358,7 +358,7 @@ def main():
     train_dataset = preprocessor.create_bat_file_dataset()
 
     train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size,
-                              shuffle=True, collate_fn=collate_fn, num_workers=2)
+                              shuffle=True, collate_fn=collate_fn, num_workers=4, pin_memory=True)
 
     # Initialize Model
     model = AlphaV2(batch_norm=False)

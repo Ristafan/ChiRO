@@ -8,7 +8,7 @@ from src.Training.TrainingParams import DEVICE
 
 
 class BatFileDataSet(Dataset):
-    def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", label_column="Label"):
+    def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", label_column="Label", cache_data=True):
         """
         :param spectrogram_dir: Path to folder containing spectrogram .pt files
         :param labels_path: Path to Excel file containing labels
@@ -26,6 +26,20 @@ class BatFileDataSet(Dataset):
         # Load all spectrogram filenames
         self.load_labels_excel()
 
+        self.cache_data = cache_data
+        self.cached_spectrograms = {}
+
+        if self.cache_data:
+            print("Caching all spectrograms into memory...")
+            for excel_filename in self.filenames:
+                filename = f"spectrogram_{excel_filename}.pt"
+                spectrogram_path = os.path.join(self.spectrogram_dir, filename)
+                spectrogram = torch.load(spectrogram_path, map_location=torch.device('cpu'))
+                if spectrogram.dim() == 3:
+                    spectrogram = spectrogram.squeeze(0)
+                self.cached_spectrograms[excel_filename] = spectrogram.unsqueeze(0)
+            print("Caching complete.")
+
     def __len__(self):
         return len(self.filenames)
 
@@ -33,11 +47,10 @@ class BatFileDataSet(Dataset):
         excel_filename = self.filenames[idx]
         filename = f"spectrogram_{self.filenames[idx]}.pt"
         spectrogram_path = os.path.join(self.spectrogram_dir, filename)
-        spectrogram = torch.load(spectrogram_path, map_location=torch.device('cpu')).to(DEVICE)
+        spectrogram = torch.load(spectrogram_path, map_location=torch.device('cpu'))
 
         if spectrogram.dim() == 3:  # Fix unwanted extra batch dimensions
             spectrogram = spectrogram.squeeze(0)
-
         spectrogram = spectrogram.unsqueeze(0)  # Ensure correct shape: [1, height, width]
 
         label = torch.tensor(self.labels[excel_filename], dtype=torch.long)
