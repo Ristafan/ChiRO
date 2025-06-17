@@ -3,7 +3,7 @@ import os
 from src.DataSetSplit.TrainingClasses import bat_species, bat_species_fixed
 
 # Device Parameters
-DEVICE = "gpu"     # Options: 'cuda' for GPU, 'cpu' for CPU
+DEVICE = "cuda"     # Options: 'cuda' for GPU, 'cpu' for CPU
 
 # Preprocessing Progress
 SPLITS_ALREADY_COMPUTED = False
