@@ -3,7 +3,7 @@ import os
 from src.DataSetSplit.TrainingClasses import bat_species, bat_species_fixed
 
 # Device Parameters
-DEVICE = "cuda"     # Options: 'cuda' for GPU, 'cpu' for CPU
+DEVICE = "cpu"     # Options: 'cuda' for GPU, 'cpu' for CPU
 
 # Preprocessing Progress
 SPLITS_ALREADY_COMPUTED = False
@@ -15,9 +15,8 @@ USE_MIN_FILES_PER_CLASS = True
 TOTAL_FILES_PER_CLASS = 100
 IGNORED_LABELS = None                       # e.g., ['Chiroptera generally', 'Noise']
 MERGE_LABELS = [bat_species_fixed]                # e.g., ['Myotis', 'Plecotus']
-SPLIT_METHOD = "balanced"                   # Options: 'balanced', 'random'
-TRAIN_RATIO = 0.7
-TEST_RATIO = 0.2                            # Validation ratio will be automatically calculated as 1 - train_ratio - test_ratio
+SPLIT_METHOD = True                     # True for splitting by location, False for random split
+SPLIT_RATIOS = (0.8, 0.1, 0.10)       # Train, Validation, Test split ratios
 SEED = 42
 
 # Preprocessing Parameters

@@ -145,12 +145,16 @@ class DatasetSplitter:
             print("\n⚠️ Warning: Dataset is imbalanced due to sampling limits:")
             self.print_imbalance_report()
 
+        # Return number of classes
+        return len(self.df['Class'].unique())
+
     def print_imbalance_report(self):
         for class_name, count in self.class_counts_after_limit.items():
             print(f"Class '{class_name}': {count} samples")
 
     def export_splits_to_excel(self, output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
 
         def prepare_export_df(df):
             if self.col_filename in df.columns:
@@ -159,19 +163,45 @@ class DatasetSplitter:
             else:
                 df['Filename'] = 'unknown'
 
-            def build_filepath(filename):
-                if filename == 'unknown':
+            def build_filepath(row):
+                original_path = row.get('output_fpath', 'unknown')
+                if original_path == 'unknown' or not isinstance(original_path, str):
                     return 'unknown'
-                # Join root_path and filename using forward slashes
-                # Make sure root_path ends with '/'
-                root = self.root_path.replace('\\', '/')
-                if not root.endswith('/'):
-                    root += '/'
-                # Construct full path + .WAV extension
-                return f"{root}{filename}.WAV"
 
-            df['Filepath'] = df['Filename'].apply(build_filepath)
-            return df
+                # Normalize root path
+                new_root = self.root_path.replace('\\', '/')
+                if not new_root.endswith('/'):
+                    new_root += '/'
+
+                # Extract the relative path from the original output_fpath
+                # (everything after "LabelledSequences")
+                split_token = "LabelledSequences"
+                if split_token in original_path:
+                    _, relative_path = original_path.split(split_token, 1)
+                    relative_path = relative_path.lstrip("\\/")
+                    # Construct new path
+                    return f"{new_root}{relative_path}".replace('\\', '/')
+
+                return 'unknown'
+
+            df['Filepath'] = df.apply(build_filepath, axis=1)
+
+            # Include required columns (modify as needed)
+            export_df = df[[
+                'Filename',
+                'Filepath',
+                self.col_location,
+                self.col_label,
+                'Class',
+                'label'
+            ]].copy()
+
+            return export_df
+
+            # Consistent labels 0 to n-1 after merging/ignoring
+            class_list = sorted(self.df['Class'].unique())  # All final classes
+            label_map = {cls_name: idx for idx, cls_name in enumerate(class_list)}
+            df['label'] = df['Class'].map(label_map)
 
         sets = {
             'train': self.train_df,
@@ -306,9 +336,8 @@ class DatasetSplitter:
             plt.show()
 
 
-
 if __name__ == "__main__":
-    # Setup your paths and merge groups here
+    # Set up your paths and merge groups here
     excel_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged_cleaned_cleaned_cleaned.xlsx"
     root_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequences"
 

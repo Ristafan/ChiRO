@@ -128,7 +128,7 @@ def cut_tensor_into_pieces(
     return cut_pieces
 
 
-def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
+def train_model(model, num_classes, train_loader, num_epochs=10, learning_rate=0.001,
                 sample_rate=16000, hop_length=512,
                 window_size_s=1.0, overlap_size_s=0.2,
                 loss_filter_threshold_percentage=0.8):
@@ -138,7 +138,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
 
     criterion = nn.CrossEntropyLoss(reduction='none') # IMPORTANT: Use reduction='none' to get per-sample losses
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    scaler = GradScaler() # For Automatic Mixed Precision
 
     wandb.watch(model, criterion, log="all", log_freq=10)
 
@@ -229,9 +228,8 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
                     individual_losses = criterion(outputs, target_labels)
                     loss = individual_losses.mean() # Calculate mean loss for backprop
 
-                scaler.scale(loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
+                loss.backward()
+                optimizer.step()
 
                 running_loss += loss.item() * len(current_section_minibatch) # Accumulate total loss correctly for all sections processed
 
@@ -352,15 +350,7 @@ def main():
     preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
 
     if not SPLITS_ALREADY_COMPUTED:
-        _ = preprocessor.create_data_splits(original_files_and_labels_path,
-                                            use_min_files_per_class=USE_MIN_FILES_PER_CLASS,
-                                            total_files_per_class=TOTAL_FILES_PER_CLASS,
-                                            ignored_labels=IGNORED_LABELS,
-                                            merge_labels=MERGE_LABELS,
-                                            split_method=SPLIT_METHOD,
-                                            train_ratio=TRAIN_RATIO,
-                                            test_ratio=TEST_RATIO,
-                                            seed=SEED)
+        _ = preprocessor.create_data_splits(original_files_and_labels_path)
 
     if not SPECTROGRAMS_ALREADY_COMPUTED:
         preprocessor.create_spectrograms_stft()
@@ -376,7 +366,7 @@ def main():
     # Log model architecture
     wandb.log({"model_summary": str(model)})
 
-    model = train_model(model, train_loader, num_epochs=wb_config.num_epochs,
+    model = train_model(model, 2, train_loader, num_epochs=wb_config.num_epochs,
                         learning_rate=wb_config.learning_rate,
                         sample_rate=SAMPLE_RATE,
                         hop_length=HOP_LENGTH,

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 
 from src.Logging.Logger import Logger
@@ -25,7 +27,6 @@ class AudioLoader:
         """Loads a single wav file."""
         waveform, sample_rate = torchaudio.load(filepath)
         waveform = waveform.to(self.device)
-
         return waveform, sample_rate
 
     def load_folder(self, data_path):
@@ -46,8 +47,8 @@ class AudioLoader:
 
         with ThreadPoolExecutor() as executor:
             for filepath in tqdm(filepaths, desc='Loading Audio Files'):
-                waveform, sample_rate = self.load_wav_file(filepath)
-                Logger().log_debug(f'Loaded file {os.path.basename(filepath)}')
+                normalized_path = str(Path(filepath))  # Normalize path
+                waveform, sample_rate = self.load_wav_file(normalized_path)
                 self.data.append(waveform)
 
     @staticmethod

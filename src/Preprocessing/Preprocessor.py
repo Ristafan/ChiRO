@@ -11,6 +11,7 @@ from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, 
 from src.Preprocessing.AudioLoader import AudioLoader
 from src.Preprocessing.BatFileDataSet import BatFileDataSet
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
+from src.Training.TrainingParams import SEED, USE_MIN_FILES_PER_CLASS, SPLIT_METHOD, SPLIT_RATIOS, TOTAL_FILES_PER_CLASS
 
 
 class Preprocessor:
@@ -23,14 +24,19 @@ class Preprocessor:
         splitter = DatasetSplitter(
             excel_path=original_labels_path,
             root_path=self.root_files_path,
-            seed=42,
-            class_sample_limit=50,
-            use_min_class_count=False,
-            balance_by_location=True
+            seed=SEED,
+            class_sample_limit=TOTAL_FILES_PER_CLASS,
+            use_min_class_count=USE_MIN_FILES_PER_CLASS,
+            balance_by_location=SPLIT_METHOD,
+            split_ratios=SPLIT_RATIOS,
         )
 
         splitter.load_data()
         splitter.merge_labels([bat_species_fixed])
+        num_classes = splitter.create_splits()
+        splitter.export_splits_to_excel(os.path.dirname(self.files_and_labels_path))
+
+        return num_classes
 
     def create_spectrograms_stft(self, highpass_cutoff_freq=16000, n_fft=4096, hop_length=None, win_length=2048, denois_option="mean_subtraction"):
         # Load Audio Files and create spectrograms

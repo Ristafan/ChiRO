@@ -4,6 +4,8 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
+from src.Training.TrainingParams import DEVICE
+
 
 class BatFileDataSet(Dataset):
     def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", label_column="Label"):
@@ -31,7 +33,7 @@ class BatFileDataSet(Dataset):
         excel_filename = self.filenames[idx]
         filename = f"spectrogram_{self.filenames[idx]}.pt"
         spectrogram_path = os.path.join(self.spectrogram_dir, filename)
-        spectrogram = torch.load(spectrogram_path)
+        spectrogram = torch.load(spectrogram_path, map_location=torch.device('cpu')).to(DEVICE)
 
         if spectrogram.dim() == 3:  # Fix unwanted extra batch dimensions
             spectrogram = spectrogram.squeeze(0)
