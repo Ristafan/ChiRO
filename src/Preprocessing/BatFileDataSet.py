@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
+from tqdm import tqdm
 
 from src.Training.TrainingParams import DEVICE
 
@@ -30,15 +31,15 @@ class BatFileDataSet(Dataset):
         self.cached_spectrograms = {}
 
         if self.cache_data:
-            print("Caching all spectrograms into memory...")
-            for excel_filename in self.filenames:
+            print("Caching all spectrograms into memory...", flush=True)
+            for excel_filename in tqdm(self.filenames, desc="Caching spectrograms", unit="file"):
                 filename = f"spectrogram_{excel_filename}.pt"
                 spectrogram_path = os.path.join(self.spectrogram_dir, filename)
                 spectrogram = torch.load(spectrogram_path, map_location=torch.device('cpu'))
                 if spectrogram.dim() == 3:
                     spectrogram = spectrogram.squeeze(0)
                 self.cached_spectrograms[excel_filename] = spectrogram.unsqueeze(0)
-            print("Caching complete.")
+            print("Caching complete.", flush=True)
 
     def __len__(self):
         return len(self.filenames)
