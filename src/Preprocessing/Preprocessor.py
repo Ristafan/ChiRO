@@ -5,7 +5,6 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.DataSetSplit.DatasetSplitter import DatasetSplitter
-from src.DataSetSplit.SplitSets import SplitSet
 from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, \
     Chiroptera_generally, bat_species_fixed
 from src.Preprocessing.AudioLoader import AudioLoader
