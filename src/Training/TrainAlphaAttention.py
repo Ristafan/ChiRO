@@ -136,15 +136,7 @@ def main():
     preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
 
     if not SPLITS_ALREADY_COMPUTED:
-        _ = preprocessor.create_data_splits(original_files_and_labels_path,
-                                                  use_min_files_per_class=USE_MIN_FILES_PER_CLASS,
-                                                  total_files_per_class=TOTAL_FILES_PER_CLASS,
-                                                  ignored_labels=IGNORED_LABELS,
-                                                  merge_labels=MERGE_LABELS,
-                                                  split_method=SPLIT_METHOD,
-                                                  train_ratio=TRAIN_RATIO,
-                                                  test_ratio=TEST_RATIO,
-                                                  seed=SEED)
+        _ = preprocessor.create_data_splits(original_files_and_labels_path)
 
     if not SPECTROGRAMS_ALREADY_COMPUTED:
         preprocessor.create_spectrograms_stft()

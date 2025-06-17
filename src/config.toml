@@ -6,7 +6,7 @@ train_files_and_labels_path_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/dat
 train_files_and_labels_path_alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"
 
 [spectrogram]
-spectrograms_dir = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/spectrograms"
+spectrograms_dir = "D:/Bachelorarbeit/AgroscopeData/spectrograms"
 
 [model]
 alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Alpha"

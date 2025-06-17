@@ -6,8 +6,8 @@ from src.DataSetSplit.TrainingClasses import bat_species, bat_species_fixed
 DEVICE = "cuda"     # Options: 'cuda' for GPU, 'cpu' for CPU
 
 # Preprocessing Progress
-SPLITS_ALREADY_COMPUTED = False
-SPECTROGRAMS_ALREADY_COMPUTED = False
+SPLITS_ALREADY_COMPUTED = True
+SPECTROGRAMS_ALREADY_COMPUTED = True
 
 # Data split Parameters
 DATASET_NAME = "BatCalls-Environment"
@@ -28,11 +28,11 @@ HOP_LENGTH = WIN_LENGTH // 2
 DENOISE_OPTION = "mean_subtraction"           # Options: 'mean_subtraction', 'median_filter'
 
 # Training Model Parameters
-MODEL = "AlphaV2"
-MODEL_NAME = f"alphaV2_{datetime.now().strftime('%H-%M-%S')}.pth"
+MODEL = "AlphaAttention"
+MODEL_NAME = f"{MODEL}_{datetime.now().strftime('%H-%M-%S')}.pth"
 BATCH_SIZE = 2
 NUM_EPOCHS = 2
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0001
 DROPOUT_RATE = 0.3
 BATCH_NORM = False                          # Set to True if you want to use Batch Normalization in the model
 

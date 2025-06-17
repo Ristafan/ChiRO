@@ -19,7 +19,6 @@ class AudioLoader:
         self.sample_rate = None
         self.data = []
         self.device = torch.device(DEVICE)
-        print(f"AudioLoader initialized for device: {self.device}", flush=True)
 
     def get_data(self):
         return self.data
