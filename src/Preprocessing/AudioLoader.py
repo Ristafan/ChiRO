@@ -1,3 +1,4 @@
+import glob
 from pathlib import Path
 
 import pandas as pd
@@ -35,10 +36,7 @@ class AudioLoader:
 
         with ThreadPoolExecutor() as executor:
             for waveform, sample_rate in tqdm(executor.map(self.load_wav_file, file_paths), total=len(file_paths), desc='Loading Audio Files'):
-                Logger().log_debug(f'Loaded file {os.path.basename(file_paths[len(self.data)])}')
                 self.data.append(waveform)
-
-        Logger().log_debug(f'Data loaded from folder {data_path}')
 
     def load_audio_from_exel(self, file_path):
         """Load audio files from an Excel file."""
