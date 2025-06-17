@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 from src.DataSetSplit.TrainingClasses import bat_species, bat_species_fixed
 
 # Device Parameters
@@ -42,6 +43,7 @@ OVERLAP_SIZE = 0.2
 LOSS_FILTER_THRESHOLD_PERCENTAGE = 0.8  # Percentage of the maximum loss to filter outliers
 
 # WandB Parameters
+os.environ["WANDB_MODE"] = "offline"  # Set to "online" for live logging, "offline" for local logging
 USE_WANDB = True
 WANDB_PROJECT = "ChiRO"
 WANDB_ENTITY = "martin-faehnrich-university-of-z-rich"

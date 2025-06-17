@@ -74,7 +74,7 @@ bat_species_fixed = [
     "Hypsugo_savii",
     "Miniopterus_schreibersii",
     "Myotis_bechsteinii_or_Myotis_sp",
-    "Myotis_brandtii_or_Myotis mystacinus",
+    "Myotis_brandtii_or_Myotis_mystacinus",
     "Myotis_capaccinii_or_Myotis_daubentonii",
     "Myotis_daubentonii",
     "Myotis_daubentonii_or_Myotis_capaccinii",
