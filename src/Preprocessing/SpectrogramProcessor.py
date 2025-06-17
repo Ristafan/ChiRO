@@ -43,7 +43,7 @@ class SpectrogramProcessor:
         Computes a high-resolution spectrogram optimized for bat echolocation calls.
         Reduced default n_fft and win_length.
         """
-        transform = T.Spectrogram(n_fft=n_fft, win_length=win_length, hop_length=hop_length, power=2.0)
+        transform = T.Spectrogram(n_fft=n_fft, win_length=win_length, hop_length=hop_length, power=2.0).to(self.waveform.device)
         self.spectrogram = transform(self.waveform)
         return self.spectrogram
 
