@@ -2,7 +2,6 @@ import pandas as pd
 import os
 import random as rd
 from collections import defaultdict
-from tqdm import tqdm
 
 from src.DataSetSplit.TrainingClasses import bat_species, eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally
 
@@ -108,9 +107,11 @@ class SplitSet:
         if self.split_seed is not None:
             rd.seed(self.split_seed)
 
+        print(merge_labels)
         if merge_labels:
             for merge_group in merge_labels:
-                new_label = merge_group[0].split(" ")[0] if isinstance(merge_group, list) and merge_group else f"merged_class_{rd.randint(0, 100)}"
+                new_label = merge_group[0].split("_")[0] if isinstance(merge_group, list) and merge_group else f"merged_class_{rd.randint(0, 100)}"
+                print(f"Merging labels: {merge_group} into new label: {new_label}")
                 self.merge_class_labels(merge_group, new_label)
 
         if merge_criteria:
@@ -168,7 +169,7 @@ class SplitSet:
         print(f"\nFinal set sizes - Train: {len(self.train_set)}, Val: {len(self.val_set)}, Test: {len(self.test_set)}")
 
         # Return label of "Env sounds" if present
-        return self.class_to_numeric_label.get("Env sounds", -1)  # -1 for unknown
+        return self.class_to_numeric_label.get("Env_sounds", -1)  # -1 for unknown
 
     def export_to_excel(self, output_dir):
         os.makedirs(output_dir, exist_ok=True)
