@@ -11,7 +11,7 @@ from src.DataSetSplit.TrainingClasses import bat_species
 from src.Preprocessing.Preprocessor import Preprocessor
 from src.Architectures.AlphaV2 import AlphaV2
 from src.Training.TrainingParams import SPLITS_ALREADY_COMPUTED, SPECTROGRAMS_ALREADY_COMPUTED, USE_MIN_FILES_PER_CLASS, \
-    TOTAL_FILES_PER_CLASS, IGNORED_LABELS, MERGE_LABELS, SPLIT_METHOD, TRAIN_RATIO, TEST_RATIO, SEED, LEARNING_RATE, \
+    TOTAL_FILES_PER_CLASS, IGNORED_LABELS, MERGE_LABELS, SPLIT_METHOD, SEED, LEARNING_RATE, \
     DATASET_NAME, NUM_EPOCHS, BATCH_SIZE, MODEL, MODEL_NAME, WANDB_API_KEY
 from src.utils import load_config
 
