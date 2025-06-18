@@ -1,11 +1,8 @@
 import os
-import time
 
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-from tqdm import tqdm
-
 from src.Training.TrainingParams import DEVICE
 
 
@@ -35,9 +32,7 @@ class BatFileDataSet(Dataset):
         excel_filename = self.filenames[idx]
         filename = f"spectrogram_{self.filenames[idx]}.pt"
         spectrogram_path = os.path.join(self.spectrogram_dir, filename)
-        start_time = time.time()
         spectrogram = torch.load(spectrogram_path, map_location=torch.device('cpu'))
-        print(f"Loaded spectrogram {filename} in {time.time() - start_time:.2f} seconds", flush=True)
 
         if spectrogram.dim() == 3:  # Fix unwanted extra batch dimensions
             spectrogram = spectrogram.squeeze(0)
