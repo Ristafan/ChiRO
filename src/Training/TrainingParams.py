@@ -28,7 +28,7 @@ HOP_LENGTH = WIN_LENGTH // 2
 DENOISE_OPTION = "mean_subtraction"           # Options: 'mean_subtraction', 'median_filter'
 
 # Training Model Parameters
-MODEL = "AlphaAttention"
+MODEL = "AlphaMIL"
 MODEL_NAME = f"{MODEL}_{datetime.now().strftime('%H-%M-%S')}.pth"
 BATCH_SIZE = 2
 NUM_EPOCHS = 2

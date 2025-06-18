@@ -1,4 +1,5 @@
 import os
+import time
 
 import pandas as pd
 import torch
@@ -9,7 +10,7 @@ from src.Training.TrainingParams import DEVICE
 
 
 class BatFileDataSet(Dataset):
-    def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", label_column="Label", cache_data=True):
+    def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", label_column="Label"):
         """
         :param spectrogram_dir: Path to folder containing spectrogram .pt files
         :param labels_path: Path to Excel file containing labels
@@ -27,20 +28,6 @@ class BatFileDataSet(Dataset):
         # Load all spectrogram filenames
         self.load_labels_excel()
 
-        self.cache_data = cache_data
-        self.cached_spectrograms = {}
-
-        if self.cache_data:
-            print("Caching all spectrograms into memory...", flush=True)
-            for excel_filename in tqdm(self.filenames, desc="Caching spectrograms", unit="file"):
-                filename = f"spectrogram_{excel_filename}.pt"
-                spectrogram_path = os.path.join(self.spectrogram_dir, filename)
-                spectrogram = torch.load(spectrogram_path, map_location=torch.device('cpu'))
-                if spectrogram.dim() == 3:
-                    spectrogram = spectrogram.squeeze(0)
-                self.cached_spectrograms[excel_filename] = spectrogram.unsqueeze(0)
-            print("Caching complete.", flush=True)
-
     def __len__(self):
         return len(self.filenames)
 
@@ -48,7 +35,9 @@ class BatFileDataSet(Dataset):
         excel_filename = self.filenames[idx]
         filename = f"spectrogram_{self.filenames[idx]}.pt"
         spectrogram_path = os.path.join(self.spectrogram_dir, filename)
+        start_time = time.time()
         spectrogram = torch.load(spectrogram_path, map_location=torch.device('cpu'))
+        print(f"Loaded spectrogram {filename} in {time.time() - start_time:.2f} seconds", flush=True)
 
         if spectrogram.dim() == 3:  # Fix unwanted extra batch dimensions
             spectrogram = spectrogram.squeeze(0)

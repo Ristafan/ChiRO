@@ -13,14 +13,9 @@ from TrainAlphaMIL import main as train_alpha_mil_main
 
 
 if __name__ == "__main__":
+    print("Starting hyperparameter tuning...", flush=True)
     torch.multiprocessing.set_start_method('spawn', force=True)
     tp.DEVICE = "cuda"
-
-    # Setup logging
-    log_file = "log.out"
-    os.makedirs(os.path.dirname(log_file), exist_ok=True) if os.path.dirname(log_file) else None
-    sys.stdout = open(log_file, "w", buffering=1)  # line-buffered
-    sys.stderr = sys.stdout  # Redirect errors to same file
 
     # Define hyperparameters
     batch_sizes = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
