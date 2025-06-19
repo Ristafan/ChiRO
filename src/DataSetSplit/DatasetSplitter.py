@@ -5,7 +5,8 @@ from typing import List, Optional, Tuple, Dict
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from src.DataSetSplit.TrainingClasses import bat_species_fixed
+from src.DataSetSplit.TrainingClasses import bat_species_fixed, Chiroptera_generally, pipistrellus_species, \
+    nyctalus_species, myotis_species, eptesicus_species
 
 
 class DatasetSplitter:
@@ -16,7 +17,7 @@ class DatasetSplitter:
             col_filename: str = "File",
             col_location: str = "location",
             col_label: str = "Verification 1",
-            split_ratios: Tuple[float, float, float] = (0.7, 0.15, 0.15),
+            split_ratios: Tuple[float, float, float] = (0.8, 0.1, 0.1),
             seed: Optional[int] = None,
             class_sample_limit: Optional[int] = None,
             use_min_class_count: bool = False,
@@ -63,6 +64,17 @@ class DatasetSplitter:
         # Assign integer labels to each class
         class_to_label = {cls_name: idx for idx, cls_name in enumerate(sorted(self.df['Class'].unique()))}
         self.df['label'] = self.df['Class'].map(class_to_label)
+
+    def exclude_labels(self, labels_to_exclude: List[str]):
+        if self.df is None:
+            raise RuntimeError("Data not loaded. Call load_data() first.")
+
+        # Filter out rows with excluded labels
+        initial_count = len(self.df)
+        self.df = self.df[~self.df[self.col_label].isin(labels_to_exclude)].reset_index(drop=True)
+        final_count = len(self.df)
+
+        print(f"Excluded {initial_count - final_count} rows with labels: {labels_to_exclude}")
 
     def _min_class_count(self) -> int:
         counts = self.df['Class'].value_counts()
@@ -248,7 +260,19 @@ class DatasetSplitter:
 
         # Plot 1: Verification 1 classes stacked bar chart
         plt.figure(figsize=(10, 10))
-        counts_list = [get_counts(df, self.col_label) for df in dfs]
+        counts_list = [get_counts(df, "label") for df in dfs]
+        all_labels = sorted(set().union(*[c.index for c in counts_list]))
+
+        # Replace Label number with actual class names
+        label_name = {
+            0: 'Eptesicus',
+            1: 'Myotis',
+            2: 'Nyctalus',
+            3: 'Pipistrellus',
+            4: 'Vespertilio',
+            5: 'Chiroptera'
+        }
+        counts_list = [c.rename(label_name) for c in counts_list]
         all_labels = sorted(set().union(*[c.index for c in counts_list]))
 
         bottoms = [0]*len(sets)
@@ -257,11 +281,12 @@ class DatasetSplitter:
             plt.bar(sets, heights, bottom=bottoms, label=label)
             bottoms = [sum(x) for x in zip(bottoms, heights)]
 
-        plt.title('Data Split Distribution by Verification 1 Class (stacked)')
+        plt.title('Data Split Distribution by Bat Species')
         plt.ylabel('Number of files')
         plt.xlabel('Dataset Split')
-        plt.legend(title='Verification 1', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.legend(title='Genus', bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.tight_layout()
+        plt.savefig('beta_data_split_distribution_verification1_stacked.png')
         plt.show()
 
         # Plot 2: Location stacked bar chart (only if balancing by location)
@@ -276,11 +301,12 @@ class DatasetSplitter:
                 plt.bar(sets, heights, bottom=bottoms, label=location)
                 bottoms = [sum(x) for x in zip(bottoms, heights)]
 
-            plt.title('Data Split Distribution by Location (stacked)')
+            plt.title('Data Split Distribution by Location')
             plt.ylabel('Number of files')
             plt.xlabel('Dataset Split')
             plt.legend(title='Location', bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.tight_layout()
+            plt.savefig('beta_data_split_distribution_location_stacked.png')
             plt.show()
 
     def plot_split_distribution(self, show_plots: bool = True):
@@ -299,7 +325,7 @@ class DatasetSplitter:
 
             for set_name, df in zip(sets, dfs):
                 counts_label = df[self.col_label].value_counts().reset_index()
-                counts_label.columns = ['Verification 1', 'Count']
+                counts_label.columns = ['label', 'Count']
                 counts_label['Set'] = set_name
 
                 counts_location = df[self.col_location].value_counts().reset_index()
@@ -315,12 +341,13 @@ class DatasetSplitter:
         # Plot 1: Verification 1 class distribution across sets
         plt.figure(figsize=(12, 6))
         all_counts_label = pd.concat([c[0] for c in combined], ignore_index=True)
-        sns.barplot(data=all_counts_label, x='Set', y='Count', hue='Verification 1', dodge=True)
-        plt.title('Data Split Distribution by Verification 1 Class')
+        sns.barplot(data=all_counts_label, x='Set', y='Count', hue='label', dodge=True)
+        plt.title('Data Split Distribution by Bat Species')
         plt.ylabel('Number of files')
         plt.xlabel('Dataset Split')
-        plt.legend(title='Verification 1', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.legend(title='Genus', bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.tight_layout()
+        plt.savefig('beta_data_split_distribution_verification1.png')
         plt.show()
 
         # Plot 2: Location distribution across sets (only if balancing by location is enabled)
@@ -333,6 +360,7 @@ class DatasetSplitter:
             plt.xlabel('Dataset Split')
             plt.legend(title='Location', bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.tight_layout()
+            plt.savefig('beta_data_split_distribution_location.png')
             plt.show()
 
 
@@ -346,25 +374,25 @@ if __name__ == "__main__":
         root_path=root_path,
         seed=42,
         class_sample_limit=50,
-        use_min_class_count=False,
+        use_min_class_count=True,
         balance_by_location=True
     )
 
     splitter.load_data()
-    splitter.merge_labels([bat_species_fixed])
-    print(splitter.df['Class'].value_counts())
+    splitter.exclude_labels(["Env_sounds"])
+    splitter.merge_labels([eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally])
     print("Class distribution after merging:")
-    print(splitter.df['Class'].value_counts())
+    print(splitter.df['Class'].value_counts(), end="\n\n")
 
     splitter.create_splits()
     print("Class counts after sampling:")
-    print(splitter.class_counts_after_limit)
+    print(splitter.class_counts_after_limit, end="\n\n")
 
-    if False:
+    if True:
         splitter.plot_split_distribution_stacked_bar_chart(show_plots=True)
         splitter.plot_split_distribution(show_plots=True)
 
-    splitter.export_splits_to_excel("D:/Bachelorarbeit/AgroscopeData")
+    #splitter.export_splits_to_excel("D:/Bachelorarbeit/AgroscopeData")
 
     print(f"Train samples: {len(splitter.train_df)}")
     print(f"Validation samples: {len(splitter.val_df)}")
