@@ -30,7 +30,7 @@ class BatFileDataSet(Dataset):
 
     def __getitem__(self, idx):
         excel_filename = self.filenames[idx]
-        filename = f"spectrogram_{self.filenames[idx]}.pt"
+        filename = f"spectrogram_{self.filenames[idx][:-4]}.pt"
         spectrogram_path = os.path.join(self.spectrogram_dir, filename)
         spectrogram = torch.load(spectrogram_path, map_location=torch.device('cpu'))
 

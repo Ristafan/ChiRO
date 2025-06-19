@@ -146,7 +146,7 @@ class SpectrogramProcessor:
         """Saves the computed spectrogram as a .pt file."""
         if self.spectrogram is None:
             raise ValueError("Spectrogram has not been computed yet.")
-        torch.save(self.spectrogram, f"{save_path}spectrogram_{name}.pt")
+        torch.save(self.spectrogram, f"{save_path}spectrogram_{name[:-4]}.pt")
 
     @staticmethod
     def load_spectrogram(filepath):
