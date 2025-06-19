@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 from src.DataSetSplit.TrainingClasses import bat_species, bat_species_fixed
 
+
 # Device Parameters
 DEVICE = "cuda"     # Options: 'cuda' for GPU, 'cpu' for CPU
 
@@ -49,3 +50,44 @@ WANDB_ENTITY = "martin-faehnrich-university-of-z-rich"
 WANDB_JOB_TYPE = "training"
 WANDB_API_KEY = "32b08e4c860b935b2cd9c30774889b952ffefe0d"
 
+
+class TrainingParams:
+    def __init__(self):
+        self.device = DEVICE
+
+        self.splits_already_computed = SPLITS_ALREADY_COMPUTED
+        self.spectrograms_already_computed = SPECTROGRAMS_ALREADY_COMPUTED
+
+        self.dataset_name = DATASET_NAME
+        self.use_min_files_per_class = USE_MIN_FILES_PER_CLASS
+        self.total_files_per_class = TOTAL_FILES_PER_CLASS
+        self.ignored_labels = IGNORED_LABELS
+        self.merge_labels = MERGE_LABELS
+        self.split_method = SPLIT_METHOD
+        self.split_ratios = SPLIT_RATIOS
+        self.seed = SEED
+
+        self.sample_rate = SAMPLE_RATE
+        self.highpass_cutoff_freq = HIGHPASS_CUTOFF_FREQ
+        self.n_fft = N_FFT
+        self.win_length = WIN_LENGTH
+        self.hop_length = HOP_LENGTH
+        self.denoise_option = DENOISE_OPTION
+
+        self.model = MODEL
+        self.model_name = MODEL_NAME
+        self.batch_size = BATCH_SIZE
+        self.num_epochs = NUM_EPOCHS
+        self.learning_rate = LEARNING_RATE
+        self.dropout_rate = DROPOUT_RATE
+        self.batch_norm = BATCH_NORM
+
+        self.window_size = WINDOW_SIZE
+        self.overlap_size = OVERLAP_SIZE
+        self.loss_filter_threshold_percentage = LOSS_FILTER_THRESHOLD_PERCENTAGE
+
+        # WandB parameters
+        self.use_wandb = USE_WANDB
+        self.wandb_project = WANDB_PROJECT
+        self.wandb_entity = WANDB_ENTITY
+        self.wandb_job_type = WANDB_JOB_TYPE

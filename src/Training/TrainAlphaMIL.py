@@ -11,10 +11,7 @@ import os
 from src.Architectures.AlphaV2 import AlphaV2
 from src.Preprocessing.Preprocessor import Preprocessor
 from src.utils import load_config
-from src.Training.TrainingParams import SPLITS_ALREADY_COMPUTED, SPECTROGRAMS_ALREADY_COMPUTED, USE_MIN_FILES_PER_CLASS, \
-    TOTAL_FILES_PER_CLASS, IGNORED_LABELS, MERGE_LABELS, SPLIT_METHOD, SEED, LEARNING_RATE, \
-    DATASET_NAME, NUM_EPOCHS, BATCH_SIZE, MODEL, MODEL_NAME, WANDB_API_KEY, SAMPLE_RATE, HOP_LENGTH, OVERLAP_SIZE, \
-    WINDOW_SIZE, LOSS_FILTER_THRESHOLD_PERCENTAGE
+from src.Training.TrainingParams import WANDB_API_KEY, TrainingParams
 
 # Set memory allocation configuration
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
@@ -128,7 +125,7 @@ def cut_tensor_into_pieces(
     return cut_pieces
 
 
-def train_model(model, num_classes, train_loader, num_epochs=10, learning_rate=0.001,
+def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
                 sample_rate=16000, hop_length=512,
                 window_size_s=1.0, overlap_size_s=0.2,
                 loss_filter_threshold_percentage=0.8):
@@ -312,7 +309,10 @@ def collate_fn(batch):
     return spectrograms, labels
 
 
-def main():
+def main(training_params: TrainingParams = None):
+    if training_params is None:
+        training_params = TrainingParams()  # Create a default instance if none is provided
+
     # Load configuration paths
     config = load_config()
 
@@ -330,17 +330,17 @@ def main():
         job_type="training",
         config={
             "notes": "",
-            "learning_rate": LEARNING_RATE,
-            "dataset": DATASET_NAME,
-            "num_epochs": NUM_EPOCHS,
-            "batch_size": BATCH_SIZE,
-            "model": MODEL,
-            "model_name": MODEL_NAME,
-            "spectrogram_sample_rate": SAMPLE_RATE,
-            "spectrogram_hop_length": HOP_LENGTH,
-            "section_window_size_s": WINDOW_SIZE,
-            "section_overlap_size_s": OVERLAP_SIZE,
-            "loss_filter_threshold_percentage": LOSS_FILTER_THRESHOLD_PERCENTAGE,
+            "learning_rate": training_params.learning_rate,
+            "dataset": training_params.dataset_name,
+            "num_epochs": training_params.num_epochs,
+            "batch_size": training_params.batch_size,
+            "model": training_params.model,
+            "model_name": training_params.model_name,
+            "spectrogram_sample_rate": training_params.sample_rate,
+            "spectrogram_hop_length": training_params.hop_length,
+            "section_window_size_s": training_params.window_size,
+            "section_overlap_size_s": training_params.overlap_size,
+            "loss_filter_threshold_percentage": training_params.loss_filter_threshold_percentage,
         },
     )
 
@@ -349,14 +349,13 @@ def main():
     # Load Audio Files, Labels and create spectrograms
     preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
 
-    if not SPLITS_ALREADY_COMPUTED:
+    if not training_params.splits_already_computed:
         _ = preprocessor.create_data_splits(original_files_and_labels_path)
 
-    if not SPECTROGRAMS_ALREADY_COMPUTED:
+    if not training_params.spectrograms_already_computed:
         preprocessor.create_spectrograms_stft()
 
     train_dataset = preprocessor.create_bat_file_dataset()
-
     train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size,
                               shuffle=True, collate_fn=collate_fn, num_workers=1, pin_memory=True)
 
@@ -366,13 +365,13 @@ def main():
     # Log model architecture
     wandb.log({"model_summary": str(model)})
 
-    model = train_model(model, 2, train_loader, num_epochs=wb_config.num_epochs,
-                        learning_rate=wb_config.learning_rate,
-                        sample_rate=SAMPLE_RATE,
-                        hop_length=HOP_LENGTH,
-                        window_size_s=wb_config.section_window_size_s,
-                        overlap_size_s=wb_config.section_overlap_size_s,
-                        loss_filter_threshold_percentage=wb_config.loss_filter_threshold_percentage)
+    model = train_model(model, train_loader, num_epochs=training_params.num_epochs,
+                        learning_rate=training_params.learning_rate,
+                        sample_rate=training_params.sample_rate,
+                        hop_length=training_params.hop_length,
+                        window_size_s=training_params.window_size,
+                        overlap_size_s=training_params.overlap_size,
+                        loss_filter_threshold_percentage=training_params.loss_filter_threshold_percentage)
 
     # Ensure the directory exists
     os.makedirs(model_path, exist_ok=True)

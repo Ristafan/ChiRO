@@ -41,6 +41,8 @@ if __name__ == "__main__":
     ))
     random.shuffle(hyperparameter_combinations)
 
+    training_params = tp.TrainingParams()
+
     # Loop through each configuration
     for idx, (bs, ep, lr, dr, lft, (ws, os)) in enumerate(hyperparameter_combinations):
         print(f"\n=== Running config {idx+1}/{len(hyperparameter_combinations)} ===")
@@ -48,15 +50,22 @@ if __name__ == "__main__":
         print(f"LOSS_FILTER_THRESHOLD_PERCENTAGE={lft}, WINDOW_SIZE={ws}, OVERLAP_SIZE={os}")
 
         # Update training parameters
-        tp.BATCH_SIZE = bs
-        tp.NUM_EPOCHS = ep
-        tp.LEARNING_RATE = lr
-        tp.DROPOUT_RATE = dr
-        tp.LOSS_FILTER_THRESHOLD_PERCENTAGE = lft
-        tp.WINDOW_SIZE = ws
-        tp.OVERLAP_SIZE = os
+        training_params.batch_size = bs
+        training_params.num_epochs = ep
+        training_params.learning_rate = lr
+        training_params.dropout_rate = dr
+        training_params.loss_filter_threshold_percentage = lft
+        training_params.window_size = ws
+        training_params.overlap_size = os
+        training_params.splits_already_computed = True
+        training_params.spectrograms_already_computed = True
+
+        # Create files in first run
+        if idx == 0:
+            training_params.splits_already_computed = True
+            training_params.spectrograms_already_computed = True
 
         try:
-            train_alpha_attention_main()
+            train_alpha_mil_main(training_params)
         except Exception as e:
             print(f"Training failed on config {idx+1}: {e}")

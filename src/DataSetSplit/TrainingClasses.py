@@ -28,42 +28,43 @@ bat_species = [
 ]
 
 eptesicus_species = [
-    "Eptesicus nilssonii",
-    "Eptesicus serotinus"
+    "Eptesicus_nilssonii",
+    "Eptesicus_serotinus"
 ]
 
 myotis_species = [
-    "Myotis bechsteinii or Myotis sp.",
-    "Myotis brandtii or Myotis mystacinus",
-    "Myotis capaccinii or Myotis daubentonii",
-    "Myotis daubentonii",
-    "Myotis daubentonii or Myotis capaccinii",
-    "Myotis emarginatus",
-    "Myotis myotis",
-    "Myotis nattereri",
-    "Myotis sp."
+    "Myotis_bechsteinii_or_Myotis_sp",
+    "Myotis_brandtii_or_Myotis_mystacinus",
+    "Myotis_capaccinii_or_Myotis_daubentonii",
+    "Myotis_daubentonii",
+    "Myotis_daubentonii_or_Myotis_capaccinii",
+    "Myotis_emarginatus",
+    "Myotis_myotis",
+    "Myotis_nattereri",
+    "Myotis_sp"
 ]
 
 nyctalus_species = [
-    "Nyctalus leisleri",
-    "Nyctalus noctula"
+    "Nyctalus_leisleri",
+    "Nyctalus_noctula"
 ]
 
 pipistrellus_species = [
-    "Pipistrellus kuhlii",
-    "Pipistrellus kuhlii or Pipistrellus nathusii",
-    "Pipistrellus nathusii or Pipistrellus kuhlii",
-    "Pipistrellus nathusii",
-    "Pipistrellus pipistrellus",
-    "Pipistrellus pipistrellus or Pipistrellus kuhlii",
-    "Pipistrellus pygmaeus"
+    "Pipistrellus_kuhlii",
+    "Pipistrellus_kuhlii_or_Pipistrellus_nathusii",
+    "Pipistrellus_nathusii_or_Pipistrellus_kuhlii",
+    "Pipistrellus_nathusii",
+    "Pipistrellus_pipistrellus",
+    "Pipistrellus_pipistrellus_or_Pipistrellus_kuhlii",
+    "Pipistrellus_pygmaeus"
 ]
 
 Chiroptera_generally = [
     "Chiroptera",
-    "Hypsugo savii",
-    "Plecotus austriacus",
-    "Barbastella barbastellus",
+    "Hypsugo_savii",
+    "Plecotus_austriacus",
+    "Barbastella_barbastellus",
+    "Miniopterus_schreibersii",
 ]
 
 bat_species_fixed = [
