@@ -1,141 +1,113 @@
-import os.path
+import os
 
-from src.Architectures.AlphaV1 import AlphaV1
-from src.Logging.Logger import Logger
-
+import numpy as np
 import torch
-
-from src.Preprocessing.AudioLoader import AudioLoader
+from src.Architectures.AlphaV2 import AlphaV2
+from torch.utils.data import DataLoader
 from src.Preprocessing.BatFileDataSet import BatFileDataSet
-from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
+from src.Preprocessing.Preprocessor import Preprocessor
+from src.Testing.ConfusionMatrix import plot_confusion_matrix
 
 
-class Test:
-    def __init__(self, model, model_path, data_path, labels_file_path, spectrogram_processed=False):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.data_path = data_path
-        self.labels_file_path = labels_file_path
-        self.model_path = model_path
-        self.model = model
-        self.spectrogram_processed = spectrogram_processed
+def evaluate_model_and_plot_confusion_matrix(model, model_path, test_loader=None):
+    """
+    Evaluates the AlphaV2 model by loading its weights, running inference on a
+    provided dataset (via a DataLoader), and then plotting a confusion matrix
+    based on the results.
 
-    def load_model(self):
-        try:
-            self.model.load_state_dict(torch.load(self.model_path, map_location=self.device))
-            self.model.to(self.device)
-            Logger().log_debug("Model loaded successfully.")
-        except FileNotFoundError:
-            Logger().log_debug("Model file not found.")
-            raise ValueError("Model file not found")
+    Args:
+        model (callable): A callable that returns an instance of the model to be evaluated.
+        model_path (str): Path to the saved model state dictionary (.pth file).
+                          Defaults to 'trained_alpha_v2.pth'.
+        test_loader (torch.utils.data.DataLoader): A DataLoader containing the
+                                                    test dataset. This is expected
+                                                    to yield (inputs, labels).
+    """
+    # Determine the device to run the model on (GPU if available, else CPU)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
 
-    def run_test(self):
-        """
-        Run the test on the model.
-        :return: None
-        """
-        # Load the model
-        self.load_model()
+    # Initialize the model with the same parameters used during training.
+    # Here, batch_norm is set to False as per the user's training code snippet.
+    model = model(batch_norm=False).to(device)
 
-        if not self.spectrogram_processed:
-            # Load the data
-            data_loader = AudioLoader()
-            data_loader.load_audio_from_exel(self.data_path + '/dataset_info/test_dataset_info.xlsx')
-            data = data_loader.get_data()
+    # Load the trained model weights.
+    # Ensure the 'model_path' points to your actual saved model file.
+    if os.path.exists(model_path):
+        # Use map_location to ensure it loads correctly regardless of original device
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        print(f"Model weights loaded successfully from {model_path}")
+    else:
+        print(f"Warning: Model weights not found at '{model_path}'. "
+              "Using randomly initialized weights for demonstration. "
+              "Please ensure you have a trained model saved at this path "
+              "for meaningful evaluation results.")
+        # If no model exists, the script will still run, but predictions will be random.
 
-            if not os.path.exists(self.data_path + '/TestSpectrograms/'):
-                os.makedirs(self.data_path + '/TestSpectrograms/')
+    # Set the model to evaluation mode. This disables dropout and batch normalization
+    # updates, ensuring consistent predictions.
+    model.eval()
 
-            for i in range(len(data)):
-                # Process the data
-                spectrogram_processor = SpectrogramProcessor(data[i])
-                spectrogram_processor.apply_highpass_filter()
-                spectrogram_processor.compute_spectrogram()
-                spectrogram_processor.denoise_spectrogram_mean_subtraction()
-                spectrogram_processor.save_spectrogram(f'{data_loader.get_file_names()[i]}', self.data_path + '/TestSpectrograms/')
+    all_predictions = []      # To store all predicted labels
+    all_actual_labels = []    # To store all true labels
 
-        # Load the labels
-        labels_loader = LabelsLoader(self.labels_file_path,'Filename', 'Label')
-        labels_loader.load_labels_excel()
+    # Check if a test_loader was provided
+    if test_loader is None:
+        print("Error: No test_loader provided. Cannot perform evaluation.")
+        print("Please provide a DataLoader instance containing your test dataset.")
+        return # Exit the function if no loader is provided
 
-        # Load the spectrogram
-        dataset = BatFileDataSet(self.data_path + '/TestSpectrograms/', labels_loader)
+    print(f"Starting evaluation with {len(test_loader.dataset)} samples from the provided test_loader.")
 
-        # Make predictions
-        self.model.eval()
-        predictions = []
-        with torch.no_grad():
-            for i in range(len(dataset)):
-                spectrogram, _ = dataset[i]
-                spectrogram = spectrogram.unsqueeze(0).to(self.device)
-                output = self.model(spectrogram)
-                predictions.append(output)
+    # Disable gradient calculations during evaluation to save memory and speed up inference.
+    with torch.no_grad():
+        for i, (inputs, labels) in enumerate(test_loader):
+            # Move data to the appropriate device (CPU or GPU)
+            inputs = inputs.to(device)
+            labels = labels.to(device)
 
-        Logger().log_debug("Test completed successfully.")
+            # Perform a forward pass to get model outputs (logits)
+            outputs = model(inputs)
+            # Get the predicted class by finding the index with the maximum logit value
+            _, predicted = torch.max(outputs.data, 1)
 
-        # Evaluate the model
-        accuracy, precision, recall, f1_score = self.evaluate(predictions, dataset.get_labels())
-        print(f"Model Accuracy: {accuracy * 100:.2f}%")
-        print(f"Precision: {precision:.2f}")
-        print(f"Recall: {recall:.2f}")
-        print(f"F1 Score: {f1_score:.2f}")
+            # Extend the lists with predictions and true labels, converting them to NumPy arrays
+            # and moving them to CPU first if they are on GPU.
+            all_predictions.extend(predicted.cpu().numpy())
+            all_actual_labels.extend(labels.cpu().numpy())
 
-    @staticmethod
-    def evaluate(predictions, labels):
-        correct = 0
-        true_positives = 0
-        true_negatives = 0
-        false_positives = 0
-        false_negatives = 0
-        total = len(labels)
+    # Convert the collected lists to NumPy arrays for confusion matrix calculation
+    final_predictions = np.array(all_predictions)
+    final_actual_labels = np.array(all_actual_labels)
 
-        for i in range(total):
-            if torch.argmax(predictions[i]) == labels[i]:
-                correct += 1
+    # Define the names for your classes. Make sure these match your label encoding.
+    # Assuming 0: Noise, 1: Bat Call based on '2 classes: bat call or noise'
+    label_names = ['Noise', 'Bat Call']
 
-                if labels[i] == 1:
-                    true_positives += 1
+    # Plot the unnormalized confusion matrix
+    print("\nGenerating Unnormalized Confusion Matrix:")
+    plot_confusion_matrix(final_predictions, final_actual_labels, label_names,
+                          normalize=False, title='Confusion Matrix (AlphaV2)')
 
-                if labels[i] == 0:
-                    true_negatives += 1
-
-            if labels[i] == 1:
-                false_negatives += 1
-
-            if labels[i] == 0:
-                false_positives += 1
-
-        accuracy = correct / total
-
-        if true_positives + false_positives > 0:
-            precision = true_positives / (true_positives + false_positives)
-        else:
-            precision = 0.001
-            Logger().log_debug("Precision is 0, setting to 0.001 to avoid division by zero.")
-
-        if true_positives + false_negatives > 0:
-            recall = true_positives / (true_positives + false_negatives)
-        else:
-            recall = 0.001
-            Logger().log_debug("Recall is 0, setting to 0.001 to avoid division by zero.")
-
-        f1_score = 2 * (precision * recall) / (precision + recall)
-
-        Logger().log_debug(f"Model Accuracy: {accuracy * 100:.2f}%")
-        Logger().log_debug(f"Precision: {precision:.2f}")
-        Logger().log_debug(f"Recall: {recall:.2f}")
-        Logger().log_debug(f"F1 Score: {f1_score:.2f}")
-
-        return accuracy, precision, recall, f1_score
+    # Plot the normalized confusion matrix
+    print("\nGenerating Normalized Confusion Matrix:")
+    plot_confusion_matrix(final_predictions, final_actual_labels, label_names,
+                          normalize=True, title='Normalized Confusion Matrix (AlphaV2)')
 
 
 if __name__ == "__main__":
-    # Example usage
-    model = AlphaV1()  # Replace with your model
-    model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha/alphaV1.pth"
-    data_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData"
-    labels_file_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Labels/labels_exampledata.xlsx"
-    test = Test(model, model_path, data_path, labels_file_path, spectrogram_processed=False)
-    test.run_test()
+    # Load your test dataset (replace with your actual dataset path)
+    preprocessor = Preprocessor("C:/Users/MartinFaehnrich/Documents/ChiRO/data/Alpha/test_dataset_info.xlsx",
+                                "C:/Users/MartinFaehnrich/Documents/ChiRO/data/spectrograms",
+                                "D:/Bachelorarbeit/AgroscopeData/LabelledSequences")
+    num_classes = preprocessor.create_data_splits("D:/Bachelorarbeit/AgroscopeData/LabelledSequencesMerged_cleaned_cleaned_cleaned_cleaned.xlsx")
+    #preprocessor.create_spectrograms_stft()
+    test_dataset = preprocessor.create_bat_file_dataset()
+    test_loader = DataLoader(test_dataset, batch_size=2,
+                              shuffle=True, num_workers=2)
 
+    # Path to the trained model weights
+    model_path = 'C:/Users/MartinFaehnrich/Documents/ChiRO/src/Models/Alpha/alphaMIL_19-40-33.pth'
 
-
+    # Call the evaluation function
+    evaluate_model_and_plot_confusion_matrix(AlphaV2, model_path, test_loader)
