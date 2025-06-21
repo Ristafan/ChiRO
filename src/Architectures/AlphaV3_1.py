@@ -8,12 +8,12 @@ class AlphaV3_1(nn.Module):
         super(AlphaV3_1, self).__init__()
 
         # Convolutional layers
-        self.conv1 = nn.Conv1d(1, 32, kernel_size=9, stride=1, padding=1)
+        self.conv1 = nn.Conv1d(2049, 32, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool1d(2, 2)
         self.batchnorm1 = nn.BatchNorm1d(32) if batch_norm else None
-        self.conv2 = nn.Conv1d(32, 64, kernel_size=5, stride=1, padding=1)
+        self.conv2 = nn.Conv1d(32, 64, kernel_size=3, stride=1, padding=1)
         self.batchnorm2 = nn.BatchNorm1d(64) if batch_norm else None
-        self.conv3 = nn.Conv1d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv1d(64, 128, kernel_size=5, stride=1, padding=2)
         self.dropout = nn.Dropout(dropout_rate)
 
         # Global average pooling - works with any input size
@@ -24,6 +24,9 @@ class AlphaV3_1(nn.Module):
         self.fc2 = nn.Linear(64, 2)  # 2 classes: bat call or noise
 
     def forward(self, x):
+        batch_size, channels, freq_bins, time_steps = x.size()
+        x = x.view(batch_size, channels * freq_bins, time_steps)
+
         # First block
         x = self.conv1(x)
         x = F.relu(x)

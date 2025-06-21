@@ -8,11 +8,13 @@ class AlphaV2_1(nn.Module):
         super(AlphaV2_1, self).__init__()
 
         # Convolutional layers
-        self.conv1 = nn.Conv1d(1, 32, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv1d(2049, 32, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool1d(2, 2)
         self.batchnorm1 = nn.BatchNorm1d(32) if batch_norm else None
+
         self.conv2 = nn.Conv1d(32, 64, kernel_size=3, stride=1, padding=1)
         self.batchnorm2 = nn.BatchNorm1d(64) if batch_norm else None
+
         self.conv3 = nn.Conv1d(64, 128, kernel_size=3, stride=1, padding=1)
         self.dropout = nn.Dropout(dropout_rate)
 
@@ -24,6 +26,12 @@ class AlphaV2_1(nn.Module):
         self.fc2 = nn.Linear(64, 2)  # 2 classes: bat call or noise
 
     def forward(self, x):
+        batch_size, channels, freq_bins, time_steps = x.size()
+        x = x.view(batch_size, channels * freq_bins, time_steps)
+
+        #x = x.permute(0, 3, 1, 2)  # (batch, time, channels, freq)
+        #x = x.reshape(batch_size * time_steps, channels, freq_bins)
+
         # First block
         x = self.conv1(x)
         x = F.relu(x)

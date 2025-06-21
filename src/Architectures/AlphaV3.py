@@ -8,12 +8,12 @@ class AlphaV3(nn.Module):
         super(AlphaV3, self).__init__()
 
         # Convolutional layers
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=9, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
         self.batchnorm1 = nn.BatchNorm2d(32) if batch_norm else None
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
         self.batchnorm2 = nn.BatchNorm2d(64) if batch_norm else None
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=5, stride=1, padding=2)
         self.dropout = nn.Dropout(dropout_rate)
 
         # Global average pooling - works with any input size
