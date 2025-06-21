@@ -58,7 +58,7 @@ class Bottleneck(nn.Module):
         return out
 
 class AlphaResNet50(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=2, dropout_rate=0.3):
+    def __init__(self, block, num_blocks, num_classes=2, dropout_rate=0.3, global_pooling="avg"):
         super(AlphaResNet50, self).__init__()
         self.in_channels = 64 # Initial input channels after first conv
 
@@ -78,12 +78,14 @@ class AlphaResNet50(nn.Module):
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 
         # Global average pooling
-        self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        if global_pooling == "avg":
+            self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        else:
+            self.global_avg_pool = nn.AdaptiveMaxPool2d((1, 1))
 
         # Fully connected layer
         self.fc = nn.Linear(512 * block.expansion, num_classes)
         self.dropout = nn.Dropout(dropout_rate)
-
 
     def _make_layer(self, block, out_channels, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)

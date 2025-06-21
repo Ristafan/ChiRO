@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class AlphaV3(nn.Module):
-    def __init__(self, dropout_rate=0.3, batch_norm=True):
+    def __init__(self, dropout_rate=0.3, batch_norm=True, global_pooling="avg"):
         super(AlphaV3, self).__init__()
 
         # Convolutional layers
@@ -17,7 +17,10 @@ class AlphaV3(nn.Module):
         self.dropout = nn.Dropout(dropout_rate)
 
         # Global average pooling - works with any input size
-        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
+        if global_pooling == "avg":
+            self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
+        else:
+            self.global_avg_pool = nn.AdaptiveMaxPool2d(1)
 
         # Fully connected layers
         self.fc1 = nn.Linear(128, 64)
