@@ -353,11 +353,12 @@ def main(training_params: TrainingParams = None):
         _ = preprocessor.create_data_splits(original_files_and_labels_path)
 
     if not training_params.spectrograms_already_computed:
-        preprocessor.create_spectrograms_stft()
+        preprocessor.create_spectrograms_stft(train_files_and_labels_path)
 
-    train_dataset = preprocessor.create_bat_file_dataset()
+    train_dataset = preprocessor.create_bat_file_dataset(train_files_and_labels_path)
     train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size,
                               shuffle=True, collate_fn=collate_fn, num_workers=1, pin_memory=True)
+
 
     # Initialize Model
     model = AlphaV2(batch_norm=False)

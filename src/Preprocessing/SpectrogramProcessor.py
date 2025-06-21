@@ -7,7 +7,6 @@ from scipy.ndimage import median_filter
 from torchaudio.transforms import AmplitudeToDB
 import numpy as np
 
-from src.Logging.Logger import Logger
 import torch
 import torchaudio.transforms as T
 import torchaudio.functional as F

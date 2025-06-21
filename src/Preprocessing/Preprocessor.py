@@ -37,12 +37,12 @@ class Preprocessor:
 
         return num_classes
 
-    def create_spectrograms_stft(self, highpass_cutoff_freq=16000, n_fft=4096, hop_length=None, win_length=2048, denois_option="mean_subtraction"):
+    def create_spectrograms_stft(self, files_and_labels_path, highpass_cutoff_freq=16000, n_fft=4096, hop_length=None, win_length=2048, denois_option="mean_subtraction"):
         # Load Audio Files and create spectrograms
         audio_loader = AudioLoader()
-        audio_loader.load_audio_from_exel(self.files_and_labels_path)
+        audio_loader.load_audio_from_exel(files_and_labels_path)
         waveforms = audio_loader.get_data()
-        names = audio_loader.get_file_names_from_excel(self.files_and_labels_path)
+        names = audio_loader.get_file_names_from_excel(files_and_labels_path)
 
         # Create Spectrograms
         for i in tqdm(range(len(waveforms)), desc="Creating Spectrograms", unit="file"):
@@ -58,8 +58,8 @@ class Preprocessor:
             sp.scale_to_db()
             sp.save_spectrogram(f'{names[i]}', self.spectrograms_path + '/')
 
-    def create_bat_file_dataset(self):
-        return BatFileDataSet(self.spectrograms_path, self.files_and_labels_path, "Filename", "label")
+    def create_bat_file_dataset(self, files_and_labels_path):
+        return BatFileDataSet(self.spectrograms_path, files_and_labels_path, "Filename", "label")
 
-    def create_bat_call_dataset(self):
-        return BatFileDataSet(self.spectrograms_path, self.files_and_labels_path, "Filename", "label")
+    def create_bat_call_dataset(self, files_and_labels_path):
+        return BatFileDataSet(self.spectrograms_path, files_and_labels_path, "Filename", "label")

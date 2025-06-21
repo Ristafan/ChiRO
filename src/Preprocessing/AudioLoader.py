@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.Logging.Logger import Logger
 import torch
 import torchaudio
 import os
@@ -26,7 +25,6 @@ class AudioLoader:
     def load_wav_file(self, filepath):
         """Loads a single wav file."""
         waveform, sample_rate = torchaudio.load(filepath)
-        waveform = waveform.to(self.device)
         return waveform, sample_rate
 
     def load_folder(self, data_path):

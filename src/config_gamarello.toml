@@ -4,6 +4,7 @@ original_files_and_labels_path = "/cluster/raid/home/f60047174/data/LabelledSequ
 train_files_and_labels_path_alpha = "/cluster/raid/home/f60047174/ChiRO/data/Alpha/train_dataset_info.xlsx"
 train_files_and_labels_path_beta = "/cluster/raid/home/f60047174/ChiRO/data/Beta/train_dataset_info.xlsx"
 train_files_and_labels_path_alpha_beta = "/cluster/raid/home/f60047174/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"
+validation_files_and_labels_path_alpha = "/cluster/raid/home/f60047174/ChiRO/data/Alpha/val_dataset_info.xlsx"
 
 [spectrogram]
 spectrograms_dir = "/cluster/raid/home/f60047174/data/spectrograms"

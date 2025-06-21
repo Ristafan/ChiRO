@@ -1,10 +1,12 @@
 from datetime import datetime
 import os
+
+from src.Architectures.AlphaV2 import AlphaV2
 from src.DataSetSplit.TrainingClasses import bat_species, bat_species_fixed
 
 
 # Device Parameters
-DEVICE = "cuda"     # Options: 'cuda' for GPU, 'cpu' for CPU
+DEVICE = "cpu"     # Options: 'cuda' for GPU, 'cpu' for CPU
 
 # Preprocessing Progress
 SPLITS_ALREADY_COMPUTED = True
@@ -31,16 +33,20 @@ DENOISE_OPTION = "mean_subtraction"           # Options: 'mean_subtraction', 'me
 # Training Model Parameters
 MODEL = "AlphaMIL"
 MODEL_NAME = f"{MODEL}_{datetime.now().strftime('%H-%M-%S')}.pth"
+MODEL_ARCHITECTURE = AlphaV2
+OPTIMIZER = "Adam"  # Options: 'Adam', 'SGD'
 BATCH_SIZE = 2
-NUM_EPOCHS = 2
+NUM_EPOCHS = 4
 LEARNING_RATE = 0.0001
 DROPOUT_RATE = 0.3
-BATCH_NORM = False                          # Set to True if you want to use Batch Normalization in the model
+BATCH_NORM = True                          # Set to True if you want to use Batch Normalization in the model
+EARLY_STOPPING = True
+PATIENCE = 3
 
 # Windows Parameters
-WINDOW_SIZE = 1.0
-OVERLAP_SIZE = 0.2
-LOSS_FILTER_THRESHOLD_PERCENTAGE = 0.8  # Percentage of the maximum loss to filter outliers
+WINDOW_SIZE = 0.2
+OVERLAP_SIZE = 0.1
+LOSS_FILTER_THRESHOLD_PERCENTAGE = 0.9  # Percentage of the maximum loss to filter outliers
 
 # WandB Parameters
 os.environ["WANDB_MODE"] = "offline"  # Set to "online" for live logging, "offline" for local logging
@@ -76,11 +82,15 @@ class TrainingParams:
 
         self.model = MODEL
         self.model_name = MODEL_NAME
+        self.model_architecture = MODEL_ARCHITECTURE
+        self.optimizer = OPTIMIZER
         self.batch_size = BATCH_SIZE
         self.num_epochs = NUM_EPOCHS
         self.learning_rate = LEARNING_RATE
         self.dropout_rate = DROPOUT_RATE
         self.batch_norm = BATCH_NORM
+        self.early_stopping = EARLY_STOPPING
+        self.patience = PATIENCE
 
         self.window_size = WINDOW_SIZE
         self.overlap_size = OVERLAP_SIZE
