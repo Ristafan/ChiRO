@@ -42,6 +42,7 @@ DROPOUT_RATE = 0.3
 BATCH_NORM = True                          # Set to True if you want to use Batch Normalization in the model
 EARLY_STOPPING = True
 PATIENCE = 3
+GLOBAL_POOLING = "avg"  # Options: 'avg', 'max' (for AlphaV2 and AlphaV3 architectures)
 
 # Windows Parameters
 WINDOW_SIZE = 0.2
@@ -81,8 +82,8 @@ class TrainingParams:
         self.denoise_option = DENOISE_OPTION
 
         self.model = MODEL
-        self.model_name = MODEL_NAME
         self.model_architecture = MODEL_ARCHITECTURE
+        self.model_name = MODEL_NAME
         self.optimizer = OPTIMIZER
         self.batch_size = BATCH_SIZE
         self.num_epochs = NUM_EPOCHS
@@ -91,6 +92,7 @@ class TrainingParams:
         self.batch_norm = BATCH_NORM
         self.early_stopping = EARLY_STOPPING
         self.patience = PATIENCE
+        self.global_pooling = GLOBAL_POOLING
 
         self.window_size = WINDOW_SIZE
         self.overlap_size = OVERLAP_SIZE
