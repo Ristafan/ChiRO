@@ -5,23 +5,9 @@ import torch.nn.functional as F
 
 class AlphaV1_Attention(nn.Module):
     def __init__(self, dropout_rate=0.3, batch_norm=True, num_classes=2, embed_dim=128, num_heads=8):
-        """
-        Initializes the AlphaV1_Transformer model with a CNN backbone,
-        a class token, and a cross-attention mechanism for classification.
-
-        Args:
-            dropout_rate (float): Dropout rate for regularization.
-            batch_norm (bool): Whether to use Batch Normalization.
-            num_classes (int): Number of output classes for the final prediction.
-            embed_dim (int): The dimensionality of the feature embeddings for the attention mechanism.
-                             This will be the number of output channels from the last CNN layer.
-            num_heads (int): Number of attention heads for the MultiheadAttention layer.
-        """
         super(AlphaV1_Attention, self).__init__()
 
         # --- Convolutional layers (Feature Extractor) ---
-        # These layers extract spatial features from the spectrogram.
-        # The output channels of conv3 should match `embed_dim`
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
         self.batchnorm1 = nn.BatchNorm2d(32) if batch_norm else None
@@ -35,14 +21,9 @@ class AlphaV1_Attention(nn.Module):
         self.dropout_cnn = nn.Dropout(dropout_rate)
 
         # --- Class Token ---
-        # A learnable parameter that will serve as the representation for the entire spectrogram.
-        # Its shape is [1, 1, embed_dim] (num_tokens, batch_size placeholder, embedding_dim)
-        # when not expanded for a batch.
         self.class_token = nn.Parameter(torch.randn(1, 1, embed_dim))
 
         # --- Attention Layer (Cross-Attention) ---
-        # The class token (query) will attend to the flattened CNN features (keys/values).
-        # `batch_first=False` means inputs/outputs are (Sequence_Length, Batch_Size, Embedding_Dimension).
         self.attention_layer = nn.MultiheadAttention(embed_dim=embed_dim, num_heads=num_heads, batch_first=False)
 
         # Layer Normalization is typically applied before attention in Transformers.
@@ -60,8 +41,6 @@ class AlphaV1_Attention(nn.Module):
         # Global average pooling is removed as its function is replaced by the class token.
 
     def forward(self, x):
-        # Input `x` expected shape: [batch_size, 1, freq_bins, time_frames]
-
         # --- 1. CNN Feature Extraction ---
         # First block
         x = self.conv1(x)
