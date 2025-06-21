@@ -406,7 +406,7 @@ def main(training_params: TrainingParams = None):
 
     if not training_params.spectrograms_already_computed:
         preprocessor.create_spectrograms_stft(train_files_and_labels_path)
-
+        preprocessor.create_spectrograms_stft(validation_files_and_labels_path)
 
     train_dataset = preprocessor.create_bat_file_dataset(train_files_and_labels_path)
     train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=1, pin_memory=True)
@@ -414,14 +414,11 @@ def main(training_params: TrainingParams = None):
     val_loader = DataLoader(val_dataset, batch_size=wb_config.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=1, pin_memory=True)
 
     if wb_config.model_architecture == "AlphaResNet50":
-
         model = AlphaResNet50(Bottleneck, [3, 4, 6, 3], num_classes=2, dropout_rate=wb_config.dropout_rate)
     elif wb_config.model_architecture == "AlphaV2":
         model = AlphaV2(wb_config.dropout_rate, wb_config.batch_norm)
-
     elif wb_config.model_architecture == "AlphaV2_1":
         model = AlphaV2_1(wb_config.dropout_rate, wb_config.batch_norm)
-
     elif wb_config.model_architecture == "AlphaV3":
         model = AlphaV3(wb_config.dropout_rate, wb_config.batch_norm)
     else:
