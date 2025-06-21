@@ -23,7 +23,7 @@ if __name__ == "__main__":
     global_pooling = ["avg", "max"]
 
     dataset_seed = [42]
-    training_architectures = ["AlphaAttention"]
+    training_architectures = ["AlphaSelfAttention"]
 
     # Conditional
     window_size_overlap_size = [[0.23, 0.12], [0.27, 0.13], [0.2, 0.1], [1.0, 0.3]]
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     training_params = tp.TrainingParams()
 
     # Set fixed parameters
-    training_params.model = "AlphaAttention"
+    training_params.model = "AlphaSelfAttention"
     training_params.dataset_name = "BatCalls-Environment"
 
     # Loop through each configuration
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         training_params.optimizer = op
         training_params.attention_heads = heads
         training_params.global_pooling = gp
-        training_params.model_name = f"AlphaAttention{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
+        training_params.model_name = f"AlphaSelfAttention{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
 
         training_params.splits_already_computed = True
         training_params.spectrograms_already_computed = True

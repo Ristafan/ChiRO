@@ -1,18 +1,9 @@
 import itertools
 import random
-
 import torch
 import TrainingParams as tp
-from TrainAlpha import main as train_alpha_main
-from TrainAlphaAttention import main as train_alpha_attention_main
-from TrainBeta import main as train_beta_main
-from TrainAlphaBeta import main as train_alpha_beta_main
-from TrainAlphaMIL import main as train_alpha_mil_main
-from src.Architectures.AlphaResNet50 import AlphaResNet50
-from src.Architectures.AlphaV2 import AlphaV2
-from src.Architectures.AlphaV2_1 import AlphaV2_1
-from src.Architectures.AlphaV3 import AlphaV3
-from src.Architectures.AlphaV3_1 import AlphaV3_1
+from TrainA_SectionDynamic import main as train_alpha_section_dynamic
+from src.Training.Train_A import main
 
 if __name__ == "__main__":
     print("Starting hyperparameter tuning...", flush=True)
@@ -20,7 +11,7 @@ if __name__ == "__main__":
     tp.DEVICE = "cuda"
 
     dropout_rate = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
-    batch_norm = [True, False]
+    batch_norm = [True]
 
     learning_rate = [0.0001, 0.00001, 0.001]
     optimizer = ["Adam", "SGD"]
@@ -28,10 +19,11 @@ if __name__ == "__main__":
     early_stopping = [True, False]
     patience = [2, 3, 4, 5, 6]
     batch_size = [2, 4, 6, 8, 10, 12]
-    epochs = [2, 4, 6, 10, 16, 24]
+    epochs = [2, 4, 6, 8, 10, 16]
+    global_pooling = ["avg", "max"]
 
     dataset_seed = [42]
-    training_architectures = [AlphaV2, AlphaV2_1, AlphaV3, AlphaV3_1, AlphaResNet50]
+    training_architectures = ["AlphaV2", "AlphaV2_1", "AlphaV3", "AlphaV3_1", "AlphaResNet50"]
 
     # Conditional
     window_size_overlap_size = [[0.23, 0.12], [0.27, 0.13], [0.2, 0.1], [1.0, 0.3]]
@@ -51,24 +43,24 @@ if __name__ == "__main__":
         num_heads,
         batch_norm,
         early_stopping,
-        patience
+        patience,
+        global_pooling
     ))
     random.shuffle(hyperparameter_combinations)
 
     training_params = tp.TrainingParams()
 
     # Set fixed parameters
+    training_params.model = "AlphaStandard"
     training_params.dataset_name = "BatCalls-Environment"
-    training_params.model = "AlphaSectionDynamic"
-    training_params.model_architecture = AlphaResNet50
 
     # Loop through each configuration
-    for idx, (op, bs, ep, lr, dr, lft, ws_os, heads, bn, es, pt) in enumerate(hyperparameter_combinations):
+    for idx, (op, bs, ep, lr, dr, lft, ws_os, heads, bn, es, pt, gp) in enumerate(hyperparameter_combinations):
         print(f"Running configuration {idx + 1}/{len(hyperparameter_combinations)}: "
               f"Batch Size={bs}, Epochs={ep}, Learning Rate={lr}, "
               f"Dropout Rate={dr}, Loss Filter Threshold={lft}, "
               f"Window Size={ws_os[0]}, Overlap Size={ws_os[1]}, "
-              f"Num Heads={heads}, Batch Norm={bn}, Early Stopping={es}, Patience={pt}, Optimizer={op}")
+              f"Num Heads={heads}, Batch Norm={bn}, Early Stopping={es}, Patience={pt}, Optimizer={op}, global_pooling={gp}")
 
         # Update training parameters
         training_params.batch_size = bs
@@ -83,22 +75,24 @@ if __name__ == "__main__":
         training_params.patience = pt
         training_params.optimizer = op
         training_params.attention_heads = heads
-        training_params.model_name = f"AlphaSectionDynamic_{training_params.model_architecture}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
+        training_params.global_pooling = gp
+        training_params.model_name = f"AlphaStandard{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
 
         training_params.splits_already_computed = True
         training_params.spectrograms_already_computed = True
 
         # Create files in first run
-        #if idx == 0:
-        #    training_params.splits_already_computed = False
-        #    training_params.spectrograms_already_computed = False
+        if idx == 0:
+            training_params.splits_already_computed = False
+            training_params.spectrograms_already_computed = False
 
         for architecture in training_architectures:
+            training_params.model_architecture = architecture
             try:
-                training_params.model_architecture = architecture
-                train_alpha_mil_main(training_params)
+                main(training_params)
             except Exception as e:
                 print(f"Training failed on config {idx+1}: {e}")
+
 
 # Syncing with WandB // run from wandb directory:
 # Get-ChildItem -Directory -Filter "offline-run-*" | ForEach-Object { wandb sync $_.Name }

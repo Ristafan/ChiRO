@@ -23,7 +23,7 @@ if __name__ == "__main__":
     global_pooling = ["avg", "max"]
 
     dataset_seed = [42]
-    training_architectures = ["AlphaAttention"]
+    training_architectures = ["AlphaV2", "AlphaV2_1", "AlphaV3", "AlphaV3_1", "AlphaResNet50"]
 
     # Conditional
     window_size_overlap_size = [[0.23, 0.12], [0.27, 0.13], [0.2, 0.1], [1.0, 0.3]]
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     training_params = tp.TrainingParams()
 
     # Set fixed parameters
-    training_params.model = "AlphaAttention"
+    training_params.model = "AlphaSectionDynamic"
     training_params.dataset_name = "BatCalls-Environment"
 
     # Loop through each configuration
@@ -76,20 +76,20 @@ if __name__ == "__main__":
         training_params.optimizer = op
         training_params.attention_heads = heads
         training_params.global_pooling = gp
-        training_params.model_name = f"AlphaAttention{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
+        training_params.model_name = f"AlphaSectionDynamic_{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
 
         training_params.splits_already_computed = True
         training_params.spectrograms_already_computed = True
 
         # Create files in first run
         if idx == 0:
-            training_params.splits_already_computed = True
-            training_params.spectrograms_already_computed = True
+            training_params.splits_already_computed = False
+            training_params.spectrograms_already_computed = False
 
         for architecture in training_architectures:
             training_params.model_architecture = architecture
             try:
-                main(training_params)
+                train_alpha_section_dynamic(training_params)
             except Exception as e:
                 print(f"Training failed on config {idx+1}: {e}")
 

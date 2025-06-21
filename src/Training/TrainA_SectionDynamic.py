@@ -315,13 +315,15 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, sample_
 
         wandb.log({
             "epoch": epoch + 1,
-            "train_loss_epoch_avg": train_loss_epoch_avg,
-            "train_acc_epoch_avg": train_acc_epoch_avg,
-            "validation_accuracy": val_acc_epoch_avg,
+            "sections_processed": total_sections_processed,
+            "train_loss": train_loss_epoch_avg,
+            "val_loss": val_loss_total / max(1, val_total),
+            "train_accuracy": train_acc_epoch_avg,
+            "val_accuracy": val_acc_epoch_avg,
             "learning_rate": optimizer.param_groups[0]['lr'],
-            "average_loss_epoch": average_epoch_loss if epoch_section_loss_records else 0,
-            "num_good_sections_for_next_epoch": sum(len(v) for v in spectrogram_section_map.values())
-        })
+            "average_loss_epoch": average_epoch_loss if epoch_section_loss_records else None,
+            "good_sections": sum(len(v) for v in spectrogram_section_map.values())
+        }, step=epoch+1)
 
         # Early stopping based on validation_accuracy
         if config.early_stopping:
@@ -343,8 +345,7 @@ def collate_fn(batch):
     labels = [item[1] for item in batch]
 
     # Find max time length
-    #max_len = max(spec.shape[-1] for spec in spectrograms)
-    max_len = 2813
+    max_len = max(spec.shape[-1] for spec in spectrograms)
 
     # Pad time dimension (last dim) to max_len
     padded_specs = [F.pad(spec, (0, max_len - spec.shape[-1])) for spec in spectrograms]
