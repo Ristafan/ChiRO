@@ -54,6 +54,8 @@ if __name__ == "__main__":
     # Set fixed parameters
     training_params.model = "AlphaSelfAttention"
     training_params.dataset_name = "BatCalls-Environment"
+    training_params.model_architecture = training_architectures[0]
+    training_params.model_summary = str(training_architectures[0])
 
     # Loop through each configuration
     for idx, (op, bs, ep, lr, dr, lft, ws_os, heads, bn, es, pt, gp) in enumerate(hyperparameter_combinations):
@@ -87,17 +89,10 @@ if __name__ == "__main__":
             training_params.splits_already_computed = True
             training_params.spectrograms_already_computed = True
 
-        for architecture in training_architectures:
-            training_params.model_architecture = architecture
-
-            # Log the configuration to Json
-            with open(f"config_{training_params.model_name}.json", "w") as f:
-                json.dump(training_params.__dict__, f, indent=4)
-
-            try:
-                main(training_params)
-            except Exception as e:
-                print(f"Training failed on config {idx+1}: {e}")
+        try:
+            main(training_params)
+        except Exception as e:
+            print(f"Training failed on config {idx+1}: {e}")
 
 
 # Syncing with WandB // run from wandb directory:

@@ -21,13 +21,13 @@ from src.Architectures.AlphaV2 import AlphaV2
 from src.Training.TrainingParams import SPLITS_ALREADY_COMPUTED, SPECTROGRAMS_ALREADY_COMPUTED, USE_MIN_FILES_PER_CLASS, \
     TOTAL_FILES_PER_CLASS, IGNORED_LABELS, MERGE_LABELS, SPLIT_METHOD, SEED, LEARNING_RATE, \
     DATASET_NAME, NUM_EPOCHS, BATCH_SIZE, MODEL, MODEL_NAME, WANDB_API_KEY, TrainingParams
-from src.utils import load_path_config
+from src.utils import load_path_config, update_experiment_configs, create_experiment_dir, log_metrics
 
 # Set memory allocation configuration
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 
-def train_model(model, train_loader, val_loader, config):
+def train_model(model, train_loader, val_loader, config, log_folder):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     criterion = nn.CrossEntropyLoss()
@@ -39,8 +39,6 @@ def train_model(model, train_loader, val_loader, config):
         optimizer = torch.optim.SGD(model.parameters(), lr=config.learning_rate)
     else:
         raise ValueError(f"Unsupported optimizer: {config.optimizer}")
-
-    wandb.watch(model, criterion, log="all", log_freq=10)
 
     best_val_acc = 0
     patience_counter = 0
@@ -105,15 +103,6 @@ def train_model(model, train_loader, val_loader, config):
 
         val_acc = val_correct / val_total if val_total > 0 else 0.0
 
-        # Logging
-        wandb.log({
-            "epoch": epoch + 1,
-            "train_loss": train_loss,
-            "train_accuracy": train_acc,
-            "val_accuracy": val_acc,
-            "learning_rate": optimizer.param_groups[0]['lr']
-        }, step=epoch+1)
-
         config_dict = {
             "epoch": epoch + 1,
             "train_loss": train_loss,
@@ -122,8 +111,7 @@ def train_model(model, train_loader, val_loader, config):
             "learning_rate": optimizer.param_groups[0]['lr']
         }
 
-        with open(f"config_{config.model_name}.json", "w") as f:
-            json.dump(config_dict, f, indent=4)
+        log_metrics(log_folder, epoch, config_dict)
 
         # Early stopping
         if config.early_stopping:
@@ -167,35 +155,10 @@ def main(training_params: TrainingParams = None):
     root_files_path = config['dataset']['files_path_root']
     spectrograms_path = config['spectrogram']['spectrograms_dir']
     model_path = config['model']['alpha']
+    runs_dir_alpha = config['logs']['runs_dir_alpha']
 
-    #wandb.login(key=WANDB_API_KEY) # Ensure your WANDB_API_KEY is set up
-
-    run = wandb.init(
-        project="ChiRO",
-        entity="martin-faehnrich-university-of-z-rich", # Replace with your entity
-        job_type="training",
-        config={
-            "model_name": training_params.model_name,
-            "model": training_params.model,
-            "model_architecture": training_params.model_architecture,
-            "dataset_name": training_params.dataset_name,
-            "device": training_params.device,
-            "batch_size": training_params.batch_size,
-            "num_epochs": training_params.num_epochs,
-            "learning_rate": training_params.learning_rate,
-            "dropout_rate": training_params.dropout_rate,
-            "batch_norm": training_params.batch_norm,
-            "early_stopping": training_params.early_stopping,
-            "patience": training_params.patience,
-            "optimizer": training_params.optimizer,
-            "window_size": training_params.window_size,
-            "overlap_size": training_params.overlap_size,
-            "loss_filter_threshold": training_params.loss_filter_threshold_percentage,
-            "global_pooling": training_params.global_pooling,
-        },
-    )
-
-    wb_config = wandb.config
+    # Initialize logging
+    log_folder = create_experiment_dir(training_params, runs_dir_alpha)
 
     # Load Audio Files, Labels and create spectrograms
     preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
@@ -208,47 +171,33 @@ def main(training_params: TrainingParams = None):
         preprocessor.create_spectrograms_stft(validation_files_and_labels_path)
 
     train_dataset = preprocessor.create_bat_file_dataset(train_files_and_labels_path)
-    train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=1, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=training_params.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=1, pin_memory=True)
     val_dataset = preprocessor.create_bat_file_dataset(validation_files_and_labels_path)
-    val_loader = DataLoader(val_dataset, batch_size=wb_config.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=1, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=training_params.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=1, pin_memory=True)
 
-    if wb_config.model_architecture == "AlphaResNet50":
-        model = AlphaResNet50(Bottleneck, [3, 4, 6, 3], num_classes=2, dropout_rate=wb_config.dropout_rate)
-    elif wb_config.model_architecture == "AlphaV2":
-        model = AlphaV2(wb_config.dropout_rate, wb_config.batch_norm)
-    elif wb_config.model_architecture == "AlphaV2_1":
-        model = AlphaV2_1(wb_config.dropout_rate, wb_config.batch_norm)
-    elif wb_config.model_architecture == "AlphaV3":
-        model = AlphaV3(wb_config.dropout_rate, wb_config.batch_norm)
-    elif wb_config.model_architecture == "AlphaSelfAttention":
-        model = SelfAttentionNet(4, wb_config.batch_norm, wb_config.dropout_rate, wb_config.global_pooling)
-    elif wb_config.model_architecture == "AlphaAttention":
-        model = AlphaV1_Attention(batch_norm=wb_config.batch_norm)
+    if training_params.model_architecture == "AlphaResNet50":
+        model = AlphaResNet50(Bottleneck, [3, 4, 6, 3], num_classes=2, dropout_rate=training_params.dropout_rate)
+    elif training_params.model_architecture == "AlphaV2":
+        model = AlphaV2(training_params.dropout_rate, training_params.batch_norm)
+    elif training_params.model_architecture == "AlphaV2_1":
+        model = AlphaV2_1(training_params.dropout_rate, training_params.batch_norm)
+    elif training_params.model_architecture == "AlphaV3":
+        model = AlphaV3(training_params.dropout_rate, training_params.batch_norm)
+    elif training_params.model_architecture == "AlphaSelfAttention":
+        model = SelfAttentionNet(4, training_params.batch_norm, training_params.dropout_rate, training_params.global_pooling)
+    elif training_params.model_architecture == "AlphaAttention":
+        model = AlphaV1_Attention(batch_norm=training_params.batch_norm)
     else:
-        model = AlphaV3_1(wb_config.dropout_rate, wb_config.batch_norm)
+        model = AlphaV3_1(training_params.dropout_rate, training_params.batch_norm)
 
-    # Log model architecture
-    wandb.log({"model_summary": str(model)})
-
-    model = train_model(model, train_loader, val_loader, wb_config)
+    model = train_model(model, train_loader, val_loader, training_params, log_folder)
 
     # Ensure the directory exists
     os.makedirs(model_path, exist_ok=True)
 
     # Save the model
-    torch.save(model.state_dict(), os.path.join(model_path, wb_config.model_name))
-
-    # Also save a checkpoint with more information
-    checkpoint = {
-        'epoch': wb_config.num_epochs,
-        'model_state_dict': model.state_dict(),
-        'config': {k: v for k, v in wb_config.items()}
-    }
-    torch.save(checkpoint, os.path.join(model_path, 'checkpoint_' + wb_config.model_name))
+    torch.save(model.state_dict(), os.path.join(model_path, training_params.model_name))
 
     # Number of parameters in the model
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    run.config.update({"num_params": f'The number of params is {num_params}'})
-
-    # Finish the run
-    run.finish()
+    update_experiment_configs(log_folder, training_params)
