@@ -1,4 +1,5 @@
 import itertools
+import json
 import random
 import torch
 import TrainingParams as tp
@@ -54,40 +55,42 @@ if __name__ == "__main__":
     training_params.model = "AlphaSectionDynamic"
     training_params.dataset_name = "BatCalls-Environment"
 
-    # Loop through each configuration
-    for idx, (op, bs, ep, lr, dr, lft, ws_os, heads, bn, es, pt, gp) in enumerate(hyperparameter_combinations):
-        print(f"Running configuration {idx + 1}/{len(hyperparameter_combinations)}: "
-              f"Batch Size={bs}, Epochs={ep}, Learning Rate={lr}, "
-              f"Dropout Rate={dr}, Loss Filter Threshold={lft}, "
-              f"Window Size={ws_os[0]}, Overlap Size={ws_os[1]}, "
-              f"Num Heads={heads}, Batch Norm={bn}, Early Stopping={es}, Patience={pt}, Optimizer={op}, global_pooling={gp}")
+    for architecture in training_architectures:
+        training_params.model_architecture = architecture
+        training_params.model_summary = str(architecture)
 
-        # Update training parameters
-        training_params.batch_size = bs
-        training_params.num_epochs = ep
-        training_params.learning_rate = lr
-        training_params.dropout_rate = dr
-        training_params.loss_filter_threshold_percentage = lft
-        training_params.window_size = ws_os[0]
-        training_params.overlap_size = ws_os[1]
-        training_params.batch_norm = bn
-        training_params.early_stopping = es
-        training_params.patience = pt
-        training_params.optimizer = op
-        training_params.attention_heads = heads
-        training_params.global_pooling = gp
-        training_params.model_name = f"AlphaSectionDynamic_{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
+        # Loop through each configuration
+        for idx, (op, bs, ep, lr, dr, lft, ws_os, heads, bn, es, pt, gp) in enumerate(hyperparameter_combinations):
+            print(f"Running configuration {idx + 1}/{len(hyperparameter_combinations)}: "
+                  f"Batch Size={bs}, Epochs={ep}, Learning Rate={lr}, "
+                  f"Dropout Rate={dr}, Loss Filter Threshold={lft}, "
+                  f"Window Size={ws_os[0]}, Overlap Size={ws_os[1]}, "
+                  f"Num Heads={heads}, Batch Norm={bn}, Early Stopping={es}, Patience={pt}, Optimizer={op}, global_pooling={gp}")
 
-        training_params.splits_already_computed = True
-        training_params.spectrograms_already_computed = True
+            # Update training parameters
+            training_params.batch_size = bs
+            training_params.num_epochs = ep
+            training_params.learning_rate = lr
+            training_params.dropout_rate = dr
+            training_params.loss_filter_threshold_percentage = lft
+            training_params.window_size = ws_os[0]
+            training_params.overlap_size = ws_os[1]
+            training_params.batch_norm = bn
+            training_params.early_stopping = es
+            training_params.patience = pt
+            training_params.optimizer = op
+            training_params.attention_heads = heads
+            training_params.global_pooling = gp
+            training_params.model_name = f"{training_params.model}_{training_params.model_architecture}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
 
-        # Create files in first run
-        if idx == 0:
-            training_params.splits_already_computed = False
-            training_params.spectrograms_already_computed = False
+            training_params.splits_already_computed = True
+            training_params.spectrograms_already_computed = True
 
-        for architecture in training_architectures:
-            training_params.model_architecture = architecture
+            # Create files in first run
+            if idx == 0:
+                training_params.splits_already_computed = True
+                training_params.spectrograms_already_computed = True
+
             try:
                 train_alpha_section_dynamic(training_params)
             except Exception as e:

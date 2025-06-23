@@ -6,7 +6,7 @@ from src.DataSetSplit.TrainingClasses import bat_species, bat_species_fixed
 
 
 # Device Parameters
-DEVICE = "cpu"     # Options: 'cuda' for GPU, 'cpu' for CPU
+DEVICE = "cuda"     # Options: 'cuda' for GPU, 'cpu' for CPU
 
 # Preprocessing Progress
 SPLITS_ALREADY_COMPUTED = True
@@ -15,7 +15,7 @@ SPECTROGRAMS_ALREADY_COMPUTED = True
 # Data split Parameters
 DATASET_NAME = "BatCalls-Environment"
 USE_MIN_FILES_PER_CLASS = True
-TOTAL_FILES_PER_CLASS = 100
+TOTAL_FILES_PER_CLASS = 0
 IGNORED_LABELS = None                       # e.g., ['Chiroptera generally', 'Noise']
 MERGE_LABELS = [bat_species_fixed]                # e.g., ['Myotis', 'Plecotus']
 SPLIT_METHOD = True                     # True for splitting by location, False for random split
@@ -31,8 +31,8 @@ HOP_LENGTH = WIN_LENGTH // 2
 DENOISE_OPTION = "mean_subtraction"           # Options: 'mean_subtraction', 'median_filter'
 
 # Training Model Parameters
-MODEL = "AlphaMIL"
-MODEL_NAME = f"{MODEL}_{datetime.now().strftime('%H-%M-%S')}.pth"
+MODEL = ""
+MODEL_NAME = ""
 MODEL_ARCHITECTURE = AlphaV2
 OPTIMIZER = "Adam"  # Options: 'Adam', 'SGD'
 BATCH_SIZE = 2
@@ -51,11 +51,11 @@ LOSS_FILTER_THRESHOLD_PERCENTAGE = 0.9  # Percentage of the maximum loss to filt
 
 # WandB Parameters
 os.environ["WANDB_MODE"] = "offline"  # Set to "online" for live logging, "offline" for local logging
-USE_WANDB = True
+USE_WANDB = False
 WANDB_PROJECT = "ChiRO"
 WANDB_ENTITY = "martin-faehnrich-university-of-z-rich"
 WANDB_JOB_TYPE = "training"
-WANDB_API_KEY = "32b08e4c860b935b2cd9c30774889b952ffefe0d"
+WANDB_API_KEY = ""
 
 
 class TrainingParams:
@@ -83,6 +83,7 @@ class TrainingParams:
 
         self.model = MODEL
         self.model_architecture = MODEL_ARCHITECTURE
+        self.model_summary = ""
         self.model_name = MODEL_NAME
         self.optimizer = OPTIMIZER
         self.batch_size = BATCH_SIZE
@@ -93,6 +94,8 @@ class TrainingParams:
         self.early_stopping = EARLY_STOPPING
         self.patience = PATIENCE
         self.global_pooling = GLOBAL_POOLING
+        self.training_logs = {}
+        self.num_params = 0
 
         self.window_size = WINDOW_SIZE
         self.overlap_size = OVERLAP_SIZE

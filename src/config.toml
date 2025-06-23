@@ -6,6 +6,10 @@ train_files_and_labels_path_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/dat
 train_files_and_labels_path_alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"
 validation_files_and_labels_path_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Alpha/val_dataset_info.xlsx"
 
+[logs]
+runs_dir_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/runs/alpha"
+runs_dir_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/runs/beta"
+
 [spectrogram]
 spectrograms_dir = "D:/Bachelorarbeit/AgroscopeData/spectrograms"
 

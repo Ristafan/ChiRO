@@ -1,3 +1,5 @@
+import json
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -5,7 +7,6 @@ from torch.cuda.amp import autocast, GradScaler # Import for Automatic Mixed Pre
 import numpy as np
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import wandb
 import os
 
 from src.Architectures.AlphaResNet50 import AlphaResNet50, Bottleneck
@@ -14,8 +15,8 @@ from src.Architectures.AlphaV2_1 import AlphaV2_1
 from src.Architectures.AlphaV3 import AlphaV3
 from src.Architectures.AlphaV3_1 import AlphaV3_1
 from src.Preprocessing.Preprocessor import Preprocessor
-from src.utils import load_config
-from src.Training.TrainingParams import WANDB_API_KEY, TrainingParams
+from src.Training.TrainingParams import TrainingParams
+from src.utils import load_path_config, update_experiment_configs, log_metrics, create_experiment_dir
 
 # Set memory allocation configuration
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
@@ -129,7 +130,7 @@ def cut_tensor_into_pieces(
     return cut_pieces
 
 
-def train_section_dynamic_alpha(model, train_loader, val_loader, config, sample_rate=192000, hop_length=1024):
+def train_section_dynamic_alpha(model, train_loader, val_loader, config, log_folder, sample_rate=192000, hop_length=1024):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
@@ -143,11 +144,9 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, sample_
     else:
         raise ValueError(f"Unsupported optimizer: {config.optimizer}")
 
-    wandb.watch(model, criterion, log="all", log_freq=10)
-
     window_size_s = config.window_size
     overlap_size_s = config.overlap_size
-    loss_filter_threshold_percentage = config.loss_filter_threshold
+    loss_filter_threshold_percentage = config.loss_filter_threshold_percentage
     num_epochs = config.num_epochs
 
     # This dictionary will store which sections of each full spectrogram to train on
@@ -313,17 +312,20 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, sample_
 
         val_acc_epoch_avg = val_correct / val_total if val_total > 0 else 0.0
 
-        wandb.log({
+        # Log to Json
+        config_dict = {
             "epoch": epoch + 1,
-            "sections_processed": total_sections_processed,
             "train_loss": train_loss_epoch_avg,
+            "sections_processed": total_sections_processed,
             "val_loss": val_loss_total / max(1, val_total),
             "train_accuracy": train_acc_epoch_avg,
             "val_accuracy": val_acc_epoch_avg,
             "learning_rate": optimizer.param_groups[0]['lr'],
             "average_loss_epoch": average_epoch_loss if epoch_section_loss_records else None,
             "good_sections": sum(len(v) for v in spectrogram_section_map.values())
-        }, step=epoch+1)
+        }
+
+        log_metrics(log_folder, epoch, config_dict)
 
         # Early stopping based on validation_accuracy
         if config.early_stopping:
@@ -361,8 +363,7 @@ def main(training_params: TrainingParams = None):
     if training_params is None:
         training_params = TrainingParams()  # Create a default instance if none is provided
 
-    # Load configuration paths
-    config = load_config()
+    config = load_path_config()
 
     train_files_and_labels_path = config['dataset']['train_files_and_labels_path_alpha']
     validation_files_and_labels_path = config['dataset']['validation_files_and_labels_path_alpha']
@@ -370,34 +371,10 @@ def main(training_params: TrainingParams = None):
     root_files_path = config['dataset']['files_path_root']
     spectrograms_path = config['spectrogram']['spectrograms_dir']
     model_path = config['model']['alpha']
+    runs_dir_alpha = config['logs']['runs_dir_alpha']
 
-    wandb.login(key=WANDB_API_KEY) # Ensure your WANDB_API_KEY is set up
-
-    run = wandb.init(
-        project="ChiRO",
-        entity="martin-faehnrich-university-of-z-rich", # Replace with your entity
-        job_type="training",
-        config={
-            "model_name": training_params.model_name,
-            "model": training_params.model,
-            "model_architecture": training_params.model_architecture,
-            "dataset_name": training_params.dataset_name,
-            "device": training_params.device,
-            "batch_size": training_params.batch_size,
-            "num_epochs": training_params.num_epochs,
-            "learning_rate": training_params.learning_rate,
-            "dropout_rate": training_params.dropout_rate,
-            "batch_norm": training_params.batch_norm,
-            "early_stopping": training_params.early_stopping,
-            "patience": training_params.patience,
-            "optimizer": training_params.optimizer,
-            "window_size": training_params.window_size,
-            "overlap_size": training_params.overlap_size,
-            "loss_filter_threshold": training_params.loss_filter_threshold_percentage
-        },
-    )
-
-    wb_config = wandb.config
+    # Initialize logging
+    log_folder = create_experiment_dir(training_params, runs_dir_alpha)
 
     # Load Audio Files, Labels and create spectrograms
     preprocessor = Preprocessor(train_files_and_labels_path, spectrograms_path, root_files_path)
@@ -410,44 +387,29 @@ def main(training_params: TrainingParams = None):
         preprocessor.create_spectrograms_stft(validation_files_and_labels_path)
 
     train_dataset = preprocessor.create_bat_file_dataset(train_files_and_labels_path)
-    train_loader = DataLoader(train_dataset, batch_size=wb_config.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=1, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=training_params.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=1, pin_memory=True)
     val_dataset = preprocessor.create_bat_file_dataset(validation_files_and_labels_path)
-    val_loader = DataLoader(val_dataset, batch_size=wb_config.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=1, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=training_params.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=1, pin_memory=True)
 
-    if wb_config.model_architecture == "AlphaResNet50":
-        model = AlphaResNet50(Bottleneck, [3, 4, 6, 3], num_classes=2, dropout_rate=wb_config.dropout_rate)
-    elif wb_config.model_architecture == "AlphaV2":
-        model = AlphaV2(wb_config.dropout_rate, wb_config.batch_norm)
-    elif wb_config.model_architecture == "AlphaV2_1":
-        model = AlphaV2_1(wb_config.dropout_rate, wb_config.batch_norm)
-    elif wb_config.model_architecture == "AlphaV3":
-        model = AlphaV3(wb_config.dropout_rate, wb_config.batch_norm)
+    if training_params.model_architecture == "AlphaResNet50":
+        model = AlphaResNet50(Bottleneck, [3, 4, 6, 3], num_classes=2, dropout_rate=training_params.dropout_rate)
+    elif training_params.model_architecture == "AlphaV2":
+        model = AlphaV2(training_params.dropout_rate, training_params.batch_norm)
+    elif training_params.model_architecture == "AlphaV2_1":
+        model = AlphaV2_1(training_params.dropout_rate, training_params.batch_norm)
+    elif training_params.model_architecture == "AlphaV3":
+        model = AlphaV3(training_params.dropout_rate, training_params.batch_norm)
     else:
-        model = AlphaV3_1(wb_config.dropout_rate, wb_config.batch_norm)
+        model = AlphaV3_1(training_params.dropout_rate, training_params.batch_norm)
 
-    # Log model architecture
-    wandb.log({"model_summary": str(model)})
-
-    model = train_section_dynamic_alpha(model, train_loader, val_loader, wb_config)
+    model = train_section_dynamic_alpha(model, train_loader, val_loader, training_params, log_folder)
 
     # Ensure the directory exists
     os.makedirs(model_path, exist_ok=True)
 
     # Save the model
-    torch.save(model.state_dict(), os.path.join(model_path, wb_config.model_name))
-
-    # Also save a checkpoint with more information
-    checkpoint = {
-        'epoch': wb_config.num_epochs,
-        'model_state_dict': model.state_dict(),
-
-        'config': {k: v for k, v in wb_config.items()}
-    }
-    torch.save(checkpoint, os.path.join(model_path, 'checkpoint_' + wb_config.model_name))
+    torch.save(model.state_dict(), os.path.join(model_path, training_params.model_name))
 
     # Number of parameters in the model
-    num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    run.config.update({"num_params": f'The number of params is {num_params}'})
-
-    # Finish the run
-    run.finish()
+    training_params.num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    update_experiment_configs(log_folder, training_params)

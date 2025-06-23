@@ -9,6 +9,10 @@ validation_files_and_labels_path_alpha = "/cluster/raid/home/f60047174/ChiRO/dat
 [spectrogram]
 spectrograms_dir = "/cluster/raid/home/f60047174/data/spectrograms"
 
+[logs]
+runs_dir_alpha = "/cluster/raid/home/f60047174/ChiRO/data/runs/alpha"
+runs_dir_beta = "/cluster/raid/home/f60047174/ChiRO/data/runs/beta"
+
 [model]
 alpha = "/cluster/raid/home/f60047174/ChiRO/src/models/Alpha"
 alpha_beta = "/cluster/raid/home/f60047174/ChiRO/src/models/AlphaBeta"
