@@ -49,13 +49,13 @@ if __name__ == "__main__":
     ))
     random.shuffle(hyperparameter_combinations)
 
-    training_params = tp.TrainingParams()
-
-    # Set fixed parameters
-    training_params.model = "AlphaSectionDynamic"
-    training_params.dataset_name = "BatCalls-Environment"
-
     for architecture in training_architectures:
+        training_params = tp.TrainingParams()
+
+        # Set fixed parameters
+        training_params.model = "AlphaSectionDynamic"
+        training_params.dataset_name = "BatCalls-Environment"
+
         training_params.model_architecture = architecture
         training_params.model_summary = str(architecture)
 

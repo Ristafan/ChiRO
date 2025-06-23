@@ -49,14 +49,6 @@ if __name__ == "__main__":
     ))
     random.shuffle(hyperparameter_combinations)
 
-    training_params = tp.TrainingParams()
-
-    # Set fixed parameters
-    training_params.model = "AlphaSelfAttention"
-    training_params.dataset_name = "BatCalls-Environment"
-    training_params.model_architecture = training_architectures[0]
-    training_params.model_summary = str(training_architectures[0])
-
     # Loop through each configuration
     for idx, (op, bs, ep, lr, dr, lft, ws_os, heads, bn, es, pt, gp) in enumerate(hyperparameter_combinations):
         print(f"Running configuration {idx + 1}/{len(hyperparameter_combinations)}: "
@@ -64,6 +56,14 @@ if __name__ == "__main__":
               f"Dropout Rate={dr}, Loss Filter Threshold={lft}, "
               f"Window Size={ws_os[0]}, Overlap Size={ws_os[1]}, "
               f"Num Heads={heads}, Batch Norm={bn}, Early Stopping={es}, Patience={pt}, Optimizer={op}, global_pooling={gp}")
+
+        training_params = tp.TrainingParams()
+
+        # Set fixed parameters
+        training_params.model = "AlphaSelfAttention"
+        training_params.dataset_name = "BatCalls-Environment"
+        training_params.model_architecture = training_architectures[0]
+        training_params.model_summary = str(training_architectures[0])
 
         # Update training parameters
         training_params.batch_size = bs
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         training_params.optimizer = op
         training_params.attention_heads = heads
         training_params.global_pooling = gp
-        training_params.model_name = f"{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
+        training_params.model_name = f"{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}".replace(".", "-")
 
         training_params.splits_already_computed = True
         training_params.spectrograms_already_computed = True

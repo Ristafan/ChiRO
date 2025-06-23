@@ -19,7 +19,8 @@ if __name__ == "__main__":
 
     early_stopping = [True, False]
     patience = [2, 3, 4, 5, 6]
-    batch_size = [2, 4, 6, 8, 10, 12]
+    #batch_size = [2, 4, 6, 8, 10, 12]
+    batch_size = [1]
     epochs = [2, 4, 6, 8, 10, 16]
     global_pooling = ["avg", "max"]
 
@@ -49,13 +50,13 @@ if __name__ == "__main__":
     ))
     random.shuffle(hyperparameter_combinations)
 
-    training_params = tp.TrainingParams()
-
-    # Set fixed parameters
-    training_params.model = "AlphaStandard"
-    training_params.dataset_name = "BatCalls-Environment"
-
     for architecture in training_architectures:
+        training_params = tp.TrainingParams()
+
+        # Set fixed parameters
+        training_params.model = "AlphaStandard"
+        training_params.dataset_name = "BatCalls-Environment"
+
         training_params.model_architecture = architecture
         training_params.model_summary = str(architecture)
 

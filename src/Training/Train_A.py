@@ -55,15 +55,8 @@ def train_model(model, train_loader, val_loader, config, log_folder):
             spectrograms = spectrograms.to(device)
             labels = labels.to(device)
 
-            # Convert to half precision to save memory
-            spectrograms = spectrograms.half()
-
-            optimizer.zero_grad()
-
-            # Use automatic mixed precision
-            with torch.cuda.amp.autocast():
-                outputs = model(spectrograms)  # Process whole batch at once
-                loss = criterion(outputs, labels)
+            outputs = model(spectrograms)
+            loss = criterion(outputs, labels)
 
             # Backward pass and optimization
             loss.backward()
@@ -93,13 +86,12 @@ def train_model(model, train_loader, val_loader, config, log_folder):
         val_correct = 0
         val_total = 0
 
-        with torch.no_grad():
-            for spectrograms, labels in val_loader:
-                inputs, labels = spectrograms.to(device), labels.to(device)
-                outputs = model(spectrograms)
-                preds = torch.argmax(outputs, dim=1)
-                val_correct += (preds == labels).sum().item()
-                val_total += labels.size(0)
+        for spectrograms, labels in val_loader:
+            inputs, labels = spectrograms.to(device), labels.to(device)
+            outputs = model(inputs)
+            preds = torch.argmax(outputs, dim=1)
+            val_correct += (preds == labels).sum().item()
+            val_total += labels.size(0)
 
         val_acc = val_correct / val_total if val_total > 0 else 0.0
 
@@ -123,6 +115,9 @@ def train_model(model, train_loader, val_loader, config, log_folder):
                 if patience_counter >= config.patience:
                     print(f"Early stopping at epoch {epoch + 1}")
                     break
+
+    print("Training complete!")
+    return model
 
 
 def collate_fn(batch):
@@ -196,8 +191,8 @@ def main(training_params: TrainingParams = None):
     os.makedirs(model_path, exist_ok=True)
 
     # Save the model
-    torch.save(model.state_dict(), os.path.join(model_path, training_params.model_name))
+    torch.save(model.state_dict(), os.path.join(model_path, f"{training_params.model_name}.pth"))
 
     # Number of parameters in the model
-    num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    training_params.num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     update_experiment_configs(log_folder, training_params)

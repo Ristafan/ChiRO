@@ -230,13 +230,10 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, log_fol
                 target_labels = torch.stack([s[1] for s in current_section_minibatch]).to(device)
                 original_section_info = [(s[2], s[3]) for s in current_section_minibatch] # (orig_spec_idx, section_idx)
 
-                optimizer.zero_grad()
-
-                with autocast(): # Use automatic mixed precision
-                    outputs = model(input_sections)
-                    # Use reduction='none' to get individual losses for each section in the batch
-                    individual_losses = criterion(outputs, target_labels)
-                    loss = individual_losses.mean() # Calculate mean loss for backprop
+                outputs = model(input_sections)
+                # Use reduction='none' to get individual losses for each section in the batch
+                individual_losses = criterion(outputs, target_labels)
+                loss = individual_losses.mean() # Calculate mean loss for backprop
 
                 loss.backward()
                 optimizer.step()
@@ -249,9 +246,8 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, log_fol
                 correct += (predicted == target_labels).sum().item()
 
                 # Record individual section losses for filtering
-                with torch.no_grad(): # Don't track gradients for loss recording
-                    for k, (orig_spec_idx, sec_idx) in enumerate(original_section_info):
-                        epoch_section_loss_records.append((orig_spec_idx, sec_idx, individual_losses[k].item()))
+                for k, (orig_spec_idx, sec_idx) in enumerate(original_section_info):
+                    epoch_section_loss_records.append((orig_spec_idx, sec_idx, individual_losses[k].item()))
 
                 # Update progress bar
                 train_pbar.set_postfix({'loss': loss.item(), 'acc': 100 * correct / total})
@@ -297,18 +293,17 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, log_fol
         val_total = 0
         val_loss_total = 0.0
 
-        with torch.no_grad():
-            for batch in val_loader:
-                inputs, labels = batch
-                inputs, labels = inputs.to(device), labels.to(device)
+        for batch in val_loader:
+            inputs, labels = batch
+            inputs, labels = inputs.to(device), labels.to(device)
 
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                val_loss_total += loss.sum().item()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            val_loss_total += loss.sum().item()
 
-                preds = torch.argmax(outputs, dim=1)
-                val_correct += (preds == labels).sum().item()
-                val_total += labels.size(0)
+            preds = torch.argmax(outputs, dim=1)
+            val_correct += (preds == labels).sum().item()
+            val_total += labels.size(0)
 
         val_acc_epoch_avg = val_correct / val_total if val_total > 0 else 0.0
 
@@ -408,7 +403,7 @@ def main(training_params: TrainingParams = None):
     os.makedirs(model_path, exist_ok=True)
 
     # Save the model
-    torch.save(model.state_dict(), os.path.join(model_path, training_params.model_name))
+    torch.save(model.state_dict(), os.path.join(model_path, f"{training_params.model_name}.pth"))
 
     # Number of parameters in the model
     training_params.num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
