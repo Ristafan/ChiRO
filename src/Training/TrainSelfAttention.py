@@ -1,4 +1,5 @@
 import itertools
+import json
 import random
 import torch
 import TrainingParams as tp
@@ -76,7 +77,7 @@ if __name__ == "__main__":
         training_params.optimizer = op
         training_params.attention_heads = heads
         training_params.global_pooling = gp
-        training_params.model_name = f"AlphaSelfAttention{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
+        training_params.model_name = f"{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
 
         training_params.splits_already_computed = True
         training_params.spectrograms_already_computed = True
@@ -88,6 +89,11 @@ if __name__ == "__main__":
 
         for architecture in training_architectures:
             training_params.model_architecture = architecture
+
+            # Log the configuration to Json
+            with open(f"config_{training_params.model_name}.json", "w") as f:
+                json.dump(training_params.__dict__, f, indent=4)
+
             try:
                 main(training_params)
             except Exception as e:

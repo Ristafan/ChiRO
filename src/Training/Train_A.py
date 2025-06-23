@@ -1,3 +1,5 @@
+import json
+
 from torch import nn
 from tqdm import tqdm
 import os
@@ -19,7 +21,7 @@ from src.Architectures.AlphaV2 import AlphaV2
 from src.Training.TrainingParams import SPLITS_ALREADY_COMPUTED, SPECTROGRAMS_ALREADY_COMPUTED, USE_MIN_FILES_PER_CLASS, \
     TOTAL_FILES_PER_CLASS, IGNORED_LABELS, MERGE_LABELS, SPLIT_METHOD, SEED, LEARNING_RATE, \
     DATASET_NAME, NUM_EPOCHS, BATCH_SIZE, MODEL, MODEL_NAME, WANDB_API_KEY, TrainingParams
-from src.utils import load_config
+from src.utils import load_path_config
 
 # Set memory allocation configuration
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
@@ -109,8 +111,19 @@ def train_model(model, train_loader, val_loader, config):
             "train_loss": train_loss,
             "train_accuracy": train_acc,
             "val_accuracy": val_acc,
-            "learning_rate": optimizer.param_groups[0]['lr'],
+            "learning_rate": optimizer.param_groups[0]['lr']
         }, step=epoch+1)
+
+        config_dict = {
+            "epoch": epoch + 1,
+            "train_loss": train_loss,
+            "train_accuracy": train_acc,
+            "val_accuracy": val_acc,
+            "learning_rate": optimizer.param_groups[0]['lr']
+        }
+
+        with open(f"config_{config.model_name}.json", "w") as f:
+            json.dump(config_dict, f, indent=4)
 
         # Early stopping
         if config.early_stopping:
@@ -146,7 +159,7 @@ def main(training_params: TrainingParams = None):
         training_params = TrainingParams()  # Create a default instance if none is provided
 
     # Load configuration paths
-    config = load_config()
+    config = load_path_config()
 
     train_files_and_labels_path = config['dataset']['train_files_and_labels_path_alpha']
     validation_files_and_labels_path = config['dataset']['validation_files_and_labels_path_alpha']
@@ -155,7 +168,7 @@ def main(training_params: TrainingParams = None):
     spectrograms_path = config['spectrogram']['spectrograms_dir']
     model_path = config['model']['alpha']
 
-    wandb.login(key=WANDB_API_KEY) # Ensure your WANDB_API_KEY is set up
+    #wandb.login(key=WANDB_API_KEY) # Ensure your WANDB_API_KEY is set up
 
     run = wandb.init(
         project="ChiRO",

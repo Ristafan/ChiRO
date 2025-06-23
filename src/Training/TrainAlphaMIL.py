@@ -10,7 +10,7 @@ import os
 
 from src.Architectures.AlphaV2 import AlphaV2
 from src.Preprocessing.Preprocessor import Preprocessor
-from src.utils import load_config
+from src.utils import load_path_config
 from src.Training.TrainingParams import WANDB_API_KEY, TrainingParams
 
 # Set memory allocation configuration
@@ -314,7 +314,7 @@ def main(training_params: TrainingParams = None):
         training_params = TrainingParams()  # Create a default instance if none is provided
 
     # Load configuration paths
-    config = load_config()
+    config = load_path_config()
 
     train_files_and_labels_path = config['dataset']['train_files_and_labels_path_alpha']
     original_files_and_labels_path = config['dataset']['original_files_and_labels_path']

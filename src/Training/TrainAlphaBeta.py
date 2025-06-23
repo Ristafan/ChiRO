@@ -13,7 +13,7 @@ from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, 
     Chiroptera_generally
 from src.Preprocessing.Preprocessor import Preprocessor
 from src.Architectures.AlphaBetaV1 import AlphaBetaV1
-from src.utils import load_config
+from src.utils import load_path_config
 
 # Set memory allocation configuration
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
@@ -182,7 +182,7 @@ def main():
     spectrogram_already_computed = True
 
     # Load configuration paths
-    config = load_config()
+    config = load_path_config()
     train_files_and_labels_path = config['dataset']['train_files_and_labels_path_alpha_beta']
     original_files_and_labels_path = config['dataset']['original_files_and_labels_path']
     root_files_path = config['dataset']['files_path_root']

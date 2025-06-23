@@ -15,7 +15,7 @@ from src.Batdetect2.Net2DFast import Net2DFast
 from src.DataSetSplit.TrainingClasses import bat_species, eptesicus_species, myotis_species, pipistrellus_species, \
     Chiroptera_generally, nyctalus_species
 from src.Preprocessing.Preprocessor import Preprocessor
-from src.utils import load_config
+from src.utils import load_path_config
 
 # Set memory allocation configuration
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
@@ -106,7 +106,7 @@ def main():
     calls_already_detected = False
 
     # Load configuration paths
-    config = load_config()
+    config = load_path_config()
     num_genera = 7
     train_files_and_labels_path = config['dataset']['train_files_and_labels_path_beta']
     original_files_and_labels_path = config['dataset']['original_files_and_labels_path']
