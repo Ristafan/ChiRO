@@ -10,6 +10,7 @@ import torch
 from datetime import datetime
 
 from src.Architectures.A_SelfAttention import SelfAttentionNet
+from src.Architectures.A_SelfAttentionPositional import AlphaSelfAttentionPositionalNet
 from src.Architectures.AlphaResNet50 import AlphaResNet50, Bottleneck
 from src.Architectures.AlphaV1_Attention import AlphaV1_Attention
 from src.Architectures.AlphaV2_1 import AlphaV2_1
@@ -182,6 +183,8 @@ def main(training_params: TrainingParams = None):
         model = SelfAttentionNet(4, training_params.batch_norm, training_params.dropout_rate, training_params.global_pooling)
     elif training_params.model_architecture == "AlphaAttention":
         model = AlphaV1_Attention(batch_norm=training_params.batch_norm)
+    elif training_params.model_architecture == "AlphaSelfAttentionPositional":
+        model = AlphaSelfAttentionPositionalNet(4, training_params.batch_norm, training_params.dropout_rate, training_params.global_pooling)
     else:
         model = AlphaV3_1(training_params.dropout_rate, training_params.batch_norm)
 

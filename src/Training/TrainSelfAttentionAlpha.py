@@ -24,7 +24,7 @@ if __name__ == "__main__":
     global_pooling = ["avg", "max"]
 
     dataset_seed = [42]
-    training_architectures = ["AlphaSelfAttention"]
+    training_architectures = ["AlphaSelfAttentionPositional"]
 
     # Conditional
     window_size_overlap_size = [[0.23, 0.12], [0.27, 0.13], [0.2, 0.1], [1.0, 0.3]]
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         training_params = tp.TrainingParams()
 
         # Set fixed parameters
-        training_params.model = "AlphaSelfAttention"
+        training_params.model = "AlphaSelfAttentionPositional"
         training_params.dataset_name = "BatCalls-Environment"
         training_params.model_architecture = training_architectures[0]
         training_params.model_summary = str(training_architectures[0])
