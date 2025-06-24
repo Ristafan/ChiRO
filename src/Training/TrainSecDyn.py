@@ -24,7 +24,7 @@ if __name__ == "__main__":
     global_pooling = ["avg", "max"]
 
     dataset_seed = [42]
-    training_architectures = ["AlphaV2", "AlphaV2_1", "AlphaV3", "AlphaV3_1", "AlphaResNet50"]
+    training_architectures = ["AlphaV2_1D", "AlphaV2_1D_1", "AlphaV2"]
 
     # Conditional
     window_size_overlap_size = [[0.23, 0.12], [0.27, 0.13], [0.2, 0.1], [1.0, 0.3]]

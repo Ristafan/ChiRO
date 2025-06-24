@@ -12,6 +12,8 @@ import os
 from src.Architectures.AlphaResNet50 import AlphaResNet50, Bottleneck
 from src.Architectures.AlphaV2 import AlphaV2
 from src.Architectures.AlphaV2_1 import AlphaV2_1
+from src.Architectures.AlphaV2_1D import AlphaV2_1D
+from src.Architectures.AlphaV2_1D_1 import AlphaV2_1D_1
 from src.Architectures.AlphaV3 import AlphaV3
 from src.Architectures.AlphaV3_1 import AlphaV3_1
 from src.Preprocessing.Preprocessor import Preprocessor
@@ -394,6 +396,10 @@ def main(training_params: TrainingParams = None):
         model = AlphaV2_1(training_params.dropout_rate, training_params.batch_norm)
     elif training_params.model_architecture == "AlphaV3":
         model = AlphaV3(training_params.dropout_rate, training_params.batch_norm)
+    elif training_params.model_architecture == "AlphaV2_1D":
+        model = AlphaV2_1D(training_params.dropout_rate, training_params.batch_norm, global_pooling=training_params.global_pooling)
+    elif training_params.model_architecture == "AlphaV2_1D_1":
+        model = AlphaV2_1D_1(training_params.dropout_rate, training_params.batch_norm, global_pooling=training_params.global_pooling)
     else:
         model = AlphaV3_1(training_params.dropout_rate, training_params.batch_norm)
 
