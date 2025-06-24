@@ -14,6 +14,8 @@ from src.Architectures.A_SelfAttentionPositional import AlphaSelfAttentionPositi
 from src.Architectures.AlphaResNet50 import AlphaResNet50, Bottleneck
 from src.Architectures.AlphaV1_Attention import AlphaV1_Attention
 from src.Architectures.AlphaV2_1 import AlphaV2_1
+from src.Architectures.AlphaV2_1D import AlphaV2_1D
+from src.Architectures.AlphaV2_1D_1 import AlphaV2_1D_1
 from src.Architectures.AlphaV3 import AlphaV3
 from src.Architectures.AlphaV3_1 import AlphaV3_1
 from src.DataSetSplit.TrainingClasses import bat_species
@@ -185,6 +187,10 @@ def main(training_params: TrainingParams = None):
         model = AlphaV1_Attention(batch_norm=training_params.batch_norm)
     elif training_params.model_architecture == "AlphaSelfAttentionPositional":
         model = AlphaSelfAttentionPositionalNet(4, training_params.batch_norm, training_params.dropout_rate, training_params.global_pooling)
+    elif training_params.model_architecture == "AlphaV2_1D":
+        model = AlphaV2_1D(training_params.dropout_rate, training_params.batch_norm, global_pooling=training_params.global_pooling)
+    elif training_params.model_architecture == "AlphaV2_1D_1":
+        model = AlphaV2_1D_1(training_params.dropout_rate, training_params.batch_norm, global_pooling=training_params.global_pooling)
     else:
         model = AlphaV3_1(training_params.dropout_rate, training_params.batch_norm)
 
