@@ -18,7 +18,6 @@ class BatFileDataSet(Dataset):
         self.labels_path = labels_path
         self.filename_column = filename_column
         self.label_column = label_column
-        self.longest_spectrogram_length = 0
 
         self.filenames = []
         self.labels = {}
@@ -38,9 +37,6 @@ class BatFileDataSet(Dataset):
         if spectrogram.dim() == 3:  # Fix unwanted extra batch dimensions
             spectrogram = spectrogram.squeeze(0)
         spectrogram = spectrogram.unsqueeze(0)  # Ensure correct shape: [1, height, width]
-
-        if spectrogram.shape[2] > self.longest_spectrogram_length:
-            self.longest_spectrogram_length = spectrogram.shape[2]
 
         label = torch.tensor(self.labels[excel_filename], dtype=torch.long)
         return spectrogram, label
