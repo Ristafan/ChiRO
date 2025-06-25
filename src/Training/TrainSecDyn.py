@@ -81,7 +81,7 @@ if __name__ == "__main__":
             training_params.optimizer = op
             training_params.attention_heads = heads
             training_params.global_pooling = gp
-            training_params.model_name = f"{training_params.model}_{training_params.model_architecture}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
+            training_params.model_name = f"{training_params.model}_{training_params.model_architecture}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}".replace(".", "_")
 
             training_params.splits_already_computed = True
             training_params.spectrograms_already_computed = True
