@@ -90,8 +90,6 @@ if __name__ == "__main__":
             training_params.splits_already_computed = True
             training_params.spectrograms_already_computed = True
 
-        train_alpha_section_dynamic(training_params)
-
         try:
             train_alpha_section_dynamic(training_params)
         except Exception as e:
