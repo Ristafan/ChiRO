@@ -101,7 +101,7 @@ if __name__ == "__main__":
     s.apply_highpass_filter()
     s.compute_spectrogram()
     print(s.spectrogram.shape)
-    #s.denoise_spectrogram_mean_subtraction()
+    s.denoise_spectrogram_mean_subtraction()
     s.scale_to_db()
 
     spectrogram = s.spectrogram.unsqueeze(0).to(device)  # Add batch dimension and move to device
@@ -131,36 +131,38 @@ if __name__ == "__main__":
     else:
         scaled_spectrogram_temp = (spectrogram - min_db) / (max_db - min_db)
         scaled_spectrogram_temp = scaled_spectrogram_temp.squeeze().cpu().numpy()  # Remove batch dimension and move to CPU
-        scaled_spectrogram_temp = (scaled_spectrogram_temp * 255).astype(np.uint8)
+        spectrogram = (scaled_spectrogram_temp * 255).astype(np.uint8)
 
     # Convert original spectrogram to 3 channels (BGR) for color overlay
-    original_spectrogram_colored = cv2.cvtColor(scaled_spectrogram_temp, cv2.COLOR_GRAY2BGR)
-
-    # Apply a colormap to the heatmap (e.g., JET for hot/cold visualization)
-    # Heatmap is already normalized 0-1, so scale to 0-255 for colormap
+    original_spectrogram_colored = cv2.cvtColor(spectrogram, cv2.COLOR_GRAY2BGR)
     heatmap_colored = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
 
-    # Combine the original image and the heatmap
-    # alpha is the transparency of the heatmap (0.0 to 1.0)
-    # Higher alpha means the heatmap is more opaque.
-    alpha = 0.5 # You can adjust this value (e.g., 0.4, 0.6, 0.7)
+    alpha = 0.5
     overlaid_img = cv2.addWeighted(original_spectrogram_colored, 1 - alpha, heatmap_colored, alpha, 0)
 
-    # --- 4. Display and/or Save Results ---
-    #print("\nDisplaying results. Close windows to continue...")
-    #cv2.imshow('Original Spectrogram', original_spectrogram_colored)
-    #cv2.imshow('Grad-CAM Heatmap (Raw)', heatmap_colored)
-    #cv2.imshow('Grad-CAM Overlaid', overlaid_img)
+    # --- NEW: Apply stretching to both the original and overlaid images ---
+    stretch_factor_x = 10 # Stretch factor for the time (width) dimension
+    stretch_factor_y = 1  # No stretching in the frequency (height) dimension
 
-    ## Wait for a key press and close all OpenCV windows
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    # Get original dimensions (height, width)
+    original_height, original_width = original_spectrogram_colored.shape[:2]
 
-    # Optional: Save the images
+    # Calculate new dimensions
+    new_width = int(original_width * stretch_factor_x)
+    new_height = int(original_height * stretch_factor_y) # Should be same as original height if factor is 1
+
+
+    # Resize (stretch) the images using cv2.resize
+    # INTER_LINEAR is a good default for upscaling/stretching
+    stretched_original_spectrogram = cv2.resize(original_spectrogram_colored, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
+    stretched_heatmap = cv2.resize(heatmap_colored, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
+    stretched_overlaid_img = cv2.resize(overlaid_img, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
+
+    # Save the images
     output_dir = "grad_cam_output"
     import os
     os.makedirs(output_dir, exist_ok=True)
-    cv2.imwrite(os.path.join(output_dir, "original_spectrogram.png"), original_spectrogram_colored)
-    cv2.imwrite(os.path.join(output_dir, "heatmap_raw.png"), heatmap_colored)
-    cv2.imwrite(os.path.join(output_dir, "grad_cam_overlaid.png"), overlaid_img)
+    cv2.imwrite(os.path.join(output_dir, "original_spectrogram.png"), stretched_original_spectrogram)
+    cv2.imwrite(os.path.join(output_dir, "heatmap_raw.png"), stretched_heatmap)
+    cv2.imwrite(os.path.join(output_dir, "grad_cam_overlaid.png"), stretched_overlaid_img)
     print(f"Images saved to: {os.path.abspath(output_dir)}")
