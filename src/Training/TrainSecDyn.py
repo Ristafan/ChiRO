@@ -11,24 +11,24 @@ if __name__ == "__main__":
     torch.multiprocessing.set_start_method('spawn', force=True)
     tp.DEVICE = "cuda"
 
-    dropout_rate = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+    dropout_rate = [0.0]
     batch_norm = [True]
 
-    learning_rate = [0.0001, 0.00001, 0.001]
-    optimizer = ["Adam", "SGD"]
+    learning_rate = [0.001, 0.0001]
+    optimizer = ["Adam"]
 
-    early_stopping = [True, False]
-    patience = [2, 3, 4, 5, 6]
-    batch_size = [2, 4, 6, 8, 10, 12]
-    epochs = [2, 4, 6, 8, 10, 16]
+    early_stopping = [True]
+    patience = [2]
+    batch_size = [6]
+    epochs = [10]
     global_pooling = ["avg", "max"]
 
     dataset_seed = [42]
-    training_architectures = ["AlphaV2_1D", "AlphaV2_1D_1", "AlphaV2"]
+    training_architectures = ["AlphaV2", "AlphaV2_1D", "AlphaV2_1D_1", "AlphaV3", "AlphaResNet50"]
 
     # Conditional
     window_size_overlap_size = [[0.23, 0.12], [0.27, 0.13], [0.2, 0.1], [1.0, 0.3]]
-    loss_filter_threshold = [0.75, 0.8, 0.85, 0.9, 0.95]
+    loss_filter_threshold = [0.75]
 
     num_heads = [1, 2]
 
