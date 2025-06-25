@@ -4,7 +4,9 @@ import random
 import torch
 import TrainingParams as tp
 from TrainA_SectionDynamic import main as train_alpha_section_dynamic
-from src.Training.Train_A import main
+from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, \
+    Chiroptera_generally
+from src.Training.TrainB_SectionDynamic import main
 
 if __name__ == "__main__":
     print("Starting hyperparameter tuning...", flush=True)
@@ -24,7 +26,7 @@ if __name__ == "__main__":
     global_pooling = ["avg", "max"]
 
     dataset_seed = [42]
-    training_architectures = ["AlphaV2_1D_1"]
+    training_architectures = ["BetaV3"]
 
     # Conditional
     window_size_overlap_size = [[0.23, 0.12], [0.27, 0.13], [0.2, 0.1], [1.0, 0.3]]
@@ -49,14 +51,16 @@ if __name__ == "__main__":
     ))
     random.shuffle(hyperparameter_combinations)
 
-
     training_params = tp.TrainingParams()
 
     # Set fixed parameters
-    training_params.model = "AlphaSectionDynamic"
-    training_params.dataset_name = "BatCalls-Environment"
+    training_params.model = "BetaSectionDynamic"
+    training_params.dataset_name = "GenusBatCalls"
+    training_params.ignored_labels = ["Env_sounds"]
+    training_params.merge_labels = [eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally]
+    training_params.num_classes = 6
 
-    training_params.model_architecture = training_architectures[0]
+    training_params.model_architecture = "BetaV3"
 
     # Loop through each configuration
     for idx, (op, bs, ep, lr, dr, lft, ws_os, heads, bn, es, pt, gp) in enumerate(hyperparameter_combinations):
@@ -87,13 +91,11 @@ if __name__ == "__main__":
 
         # Create files in first run
         if idx == 0:
-            training_params.splits_already_computed = True
-            training_params.spectrograms_already_computed = True
-
-        train_alpha_section_dynamic(training_params)
+            training_params.splits_already_computed = False
+            training_params.spectrograms_already_computed = False
 
         try:
-            train_alpha_section_dynamic(training_params)
+            main(training_params)
         except Exception as e:
             print(f"Training failed on config {idx+1}: {e}")
 

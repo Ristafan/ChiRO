@@ -190,7 +190,7 @@ class SpectrogramProcessor:
 
 
 if __name__ == '__main__':
-    waveform, sample_rate = AudioLoader().load_wav_file('C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train/20220630_221300T #0002_645fbdba0181f0367e9570e949180e4b.wav')
+    waveform, sample_rate = AudioLoader().load_wav_file('C:/Users/MartinFaehnrich/Documents/ChiRO/data/ExampleData/train/20210729_223400T__0001_f1825147deb480326c332fd21bce7663.wav')
 
     s = SpectrogramProcessor(waveform)
     s.apply_highpass_filter()

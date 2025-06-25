@@ -95,3 +95,17 @@ bat_species_fixed = [
     "Plecotus_austriacus",
     "Vespertilio_murinus"
 ]
+
+ignored_species_gamma = [
+    "Hypsugo_savii",
+    "Plecotus_austriacus",
+    "Env_sounds",
+]
+
+merged_Pipi_gamma = [
+    "Pipistrellus_kuhlii",
+    "Pipistrellus_nathusii",
+    "Pipistrellus_pipistrellus",
+    "Pipistrellus_pygmaeus"
+]
+

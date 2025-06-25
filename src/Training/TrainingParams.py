@@ -19,6 +19,7 @@ TOTAL_FILES_PER_CLASS = 0
 IGNORED_LABELS = None                       # e.g., ['Chiroptera generally', 'Noise']
 MERGE_LABELS = [bat_species_fixed]                # e.g., ['Myotis', 'Plecotus']
 SPLIT_METHOD = True                     # True for splitting by location, False for random split
+NUM_CLASSES = 2                     # Number of classes in the dataset, set to 0 for automatic detection
 SPLIT_RATIOS = (0.8, 0.1, 0.10)       # Train, Validation, Test split ratios
 SEED = 42
 
@@ -71,6 +72,7 @@ class TrainingParams:
         self.ignored_labels = IGNORED_LABELS
         self.merge_labels = MERGE_LABELS
         self.split_method = SPLIT_METHOD
+        self.num_classes = NUM_CLASSES
         self.split_ratios = SPLIT_RATIOS
         self.seed = SEED
 

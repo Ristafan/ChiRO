@@ -10,7 +10,6 @@ from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, 
 from src.Preprocessing.AudioLoader import AudioLoader
 from src.Preprocessing.BatFileDataSet import BatFileDataSet
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
-from src.Training.TrainingParams import SEED, USE_MIN_FILES_PER_CLASS, SPLIT_METHOD, SPLIT_RATIOS, TOTAL_FILES_PER_CLASS
 
 
 class Preprocessor:
@@ -19,19 +18,20 @@ class Preprocessor:
         self.spectrograms_path = spectrograms_path
         self.root_files_path = root_files_path
 
-    def create_data_splits(self, original_labels_path):
+    def create_data_splits(self, original_labels_path, merge_labels, exclude_labels, seed=42, total_files_per_class=0, use_min_files_per_class=True, split_method=True, split_ratios=(0.8, 0.1, 0.1)):
         splitter = DatasetSplitter(
             excel_path=original_labels_path,
             root_path=self.root_files_path,
-            seed=SEED,
-            class_sample_limit=TOTAL_FILES_PER_CLASS,
-            use_min_class_count=USE_MIN_FILES_PER_CLASS,
-            balance_by_location=SPLIT_METHOD,
-            split_ratios=SPLIT_RATIOS,
+            seed=seed,
+            class_sample_limit=total_files_per_class,
+            use_min_class_count=use_min_files_per_class,
+            balance_by_location=split_method,
+            split_ratios=split_ratios,
         )
 
         splitter.load_data()
-        splitter.merge_labels([bat_species_fixed])
+        splitter.exclude_labels(exclude_labels)
+        splitter.merge_labels(merge_labels)
         num_classes = splitter.create_splits()
         splitter.export_splits_to_excel(os.path.dirname(self.files_and_labels_path))
 

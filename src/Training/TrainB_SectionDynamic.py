@@ -16,6 +16,7 @@ from src.Architectures.AlphaV2_1D import AlphaV2_1D
 from src.Architectures.AlphaV2_1D_1 import AlphaV2_1D_1
 from src.Architectures.AlphaV3 import AlphaV3
 from src.Architectures.AlphaV3_1 import AlphaV3_1
+from src.Architectures.BetaV3 import BetaV3
 from src.Preprocessing.Preprocessor import Preprocessor
 from src.Training.TrainingParams import TrainingParams
 from src.utils import load_path_config, update_experiment_configs, log_metrics, create_experiment_dir
@@ -362,13 +363,13 @@ def main(training_params: TrainingParams = None):
 
     config = load_path_config()
 
-    train_files_and_labels_path = config['dataset']['train_files_and_labels_path_alpha']
-    validation_files_and_labels_path = config['dataset']['validation_files_and_labels_path_alpha']
+    train_files_and_labels_path = config['dataset']['train_files_and_labels_path_beta']
+    validation_files_and_labels_path = config['dataset']['validation_files_and_labels_path_beta']
     original_files_and_labels_path = config['dataset']['original_files_and_labels_path']
     root_files_path = config['dataset']['files_path_root']
     spectrograms_path = config['spectrogram']['spectrograms_dir']
-    model_path = config['model']['alpha']
-    runs_dir_alpha = config['logs']['runs_dir_alpha']
+    model_path = config['model']['beta']
+    runs_dir_alpha = config['logs']['runs_dir_beta']
 
     # Initialize logging
     log_folder = create_experiment_dir(training_params, runs_dir_alpha)
@@ -388,20 +389,10 @@ def main(training_params: TrainingParams = None):
     val_dataset = preprocessor.create_bat_file_dataset(validation_files_and_labels_path)
     val_loader = DataLoader(val_dataset, batch_size=training_params.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=1, pin_memory=True)
 
-    if training_params.model_architecture == "AlphaResNet50":
-        model = AlphaResNet50(Bottleneck, [3, 4, 6, 3], num_classes=2, dropout_rate=training_params.dropout_rate)
-    elif training_params.model_architecture == "AlphaV2":
-        model = AlphaV2(training_params.dropout_rate, training_params.batch_norm)
-    elif training_params.model_architecture == "AlphaV2_1":
-        model = AlphaV2_1(training_params.dropout_rate, training_params.batch_norm)
-    elif training_params.model_architecture == "AlphaV3":
-        model = AlphaV3(training_params.dropout_rate, training_params.batch_norm)
-    elif training_params.model_architecture == "AlphaV2_1D":
-        model = AlphaV2_1D(training_params.dropout_rate, training_params.batch_norm, global_pooling=training_params.global_pooling)
-    elif training_params.model_architecture == "AlphaV2_1D_1":
-        model = AlphaV2_1D_1(training_params.dropout_rate, training_params.batch_norm, global_pooling=training_params.global_pooling)
-    else:
-        model = AlphaV3_1(training_params.dropout_rate, training_params.batch_norm)
+    model = BetaV3(num_genera=training_params.num_classes,
+                             dropout_rate=training_params.dropout_rate,
+                             batch_norm=training_params.batch_norm,
+                             global_pooling=training_params.global_pooling)
 
     model = train_section_dynamic_alpha(model, train_loader, val_loader, training_params, log_folder)
 

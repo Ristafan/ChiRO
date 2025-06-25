@@ -4,11 +4,15 @@ original_files_and_labels_path = "D:/Bachelorarbeit/AgroscopeData/LabelledSequen
 train_files_and_labels_path_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Alpha/train_dataset_info.xlsx"
 train_files_and_labels_path_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Beta/train_dataset_info.xlsx"
 train_files_and_labels_path_alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/AlphaBeta/train_dataset_info.xlsx"
+train_files_and_labels_path_gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Gamma/train_dataset_info.xlsx"
 validation_files_and_labels_path_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Alpha/val_dataset_info.xlsx"
+validation_files_and_labels_path_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Beta/val_dataset_info.xlsx"
+validation_files_and_labels_path_gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Gamma/val_dataset_info.xlsx"
 
 [logs]
 runs_dir_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/runs/alpha"
 runs_dir_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/runs/beta"
+runs_dir_gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/runs/gamma"
 
 [spectrogram]
 spectrograms_dir = "D:/Bachelorarbeit/AgroscopeData/spectrograms"

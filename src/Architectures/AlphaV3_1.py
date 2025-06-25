@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class AlphaV3_1(nn.Module):
-    def __init__(self, dropout_rate=0.3, batch_norm=True, global_ppoling="avg"):
+    def __init__(self, dropout_rate=0.3, batch_norm=True, global_pooling="avg"):
         super(AlphaV3_1, self).__init__()
 
         # Convolutional layers

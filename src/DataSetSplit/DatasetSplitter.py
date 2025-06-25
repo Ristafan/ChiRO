@@ -388,11 +388,11 @@ if __name__ == "__main__":
     print("Class counts after sampling:")
     print(splitter.class_counts_after_limit, end="\n\n")
 
-    if True:
+    if False:
         splitter.plot_split_distribution_stacked_bar_chart(show_plots=True)
         splitter.plot_split_distribution(show_plots=True)
 
-    #splitter.export_splits_to_excel("D:/Bachelorarbeit/AgroscopeData")
+    splitter.export_splits_to_excel("./")
 
     print(f"Train samples: {len(splitter.train_df)}")
     print(f"Validation samples: {len(splitter.val_df)}")
