@@ -260,55 +260,32 @@ class DatasetSplitter:
 
         # Plot 1: Verification 1 classes stacked bar chart
         plt.figure(figsize=(10, 10))
-        counts_list = [get_counts(df, "label") for df in dfs]
-        all_labels = sorted(set().union(*[c.index for c in counts_list]))
+        counts_list = [get_counts(df, self.col_label) for df in dfs]
 
-        # Replace Label number with actual class names
-        label_name = {
-            0: 'Eptesicus',
-            1: 'Myotis',
-            2: 'Nyctalus',
-            3: 'Pipistrellus',
-            4: 'Vespertilio',
-            5: 'Chiroptera'
-        }
-        counts_list = [c.rename(label_name) for c in counts_list]
-        all_labels = sorted(set().union(*[c.index for c in counts_list]))
+        # Calculate the total count for each label across all splits
+        total_counts = {}
+        for counts in counts_list:
+            for label, count in counts.items():
+                total_counts[label] = total_counts.get(label, 0) + count
+
+        # Sort labels by their total count in descending order
+        sorted_labels = sorted(total_counts, key=total_counts.get, reverse=True)
 
         bottoms = [0]*len(sets)
-        for label in all_labels:
+        for label in sorted_labels:
             heights = [counts.get(label, 0) for counts in counts_list]
-            plt.bar(sets, heights, bottom=bottoms, label=label)
+            plt.bar(sets, heights, bottom=bottoms, label=label.replace("_", " "))
             bottoms = [sum(x) for x in zip(bottoms, heights)]
 
+        plt.ylabel('Number of files')
+        plt.xlabel('Dataset Split')
         plt.ylabel('Number of files', fontsize=18)
         plt.xlabel('Dataset Split', fontsize=18)
         plt.rcParams['legend.title_fontsize'] = 'xx-large'
         plt.xticks(fontsize=18)
-        plt.legend(title='Genus', loc='center right', prop={'size': 18})
-        plt.tight_layout()
-        plt.savefig('beta_data_split_distribution_verification1_stacked.pdf')
+        plt.legend(title='Bat Species', loc='upper right', prop={'size': 12})
+        plt.savefig('alpha_data_split_distribution_verification1_stacked.pdf')
         plt.show()
-
-        # Plot 2: Location stacked bar chart (only if balancing by location)
-        #if self.balance_by_location:
-        #    plt.figure(figsize=(10, 6))
-        #    counts_list_loc = [get_counts(df, self.col_location) for df in dfs]
-        #    all_locations = sorted(set().union(*[c.index for c in counts_list_loc]))
-#
-        #    bottoms = [0]*len(sets)
-        #    for location in all_locations:
-        #        heights = [counts.get(location, 0) for counts in counts_list_loc]
-        #        plt.bar(sets, heights, bottom=bottoms, label=location)
-        #        bottoms = [sum(x) for x in zip(bottoms, heights)]
-#
-        #    plt.title('Data Split Distribution by Location')
-        #    plt.ylabel('Number of files')
-        #    plt.xlabel('Dataset Split')
-        #    plt.legend(title='Location', bbox_to_anchor=(1.05, 1), loc='upper left')
-        #    plt.tight_layout()
-        #    plt.savefig('beta_data_split_distribution_location_stacked.png')
-        #    plt.show()
 
     def plot_split_distribution(self, show_plots: bool = True):
         if not show_plots:
@@ -364,7 +341,7 @@ class DatasetSplitter:
             plt.xticks(fontsize=18)
             plt.legend(title='Location', loc='center right', prop={'size': 18})
             plt.tight_layout()
-            plt.savefig('beta_data_split_distribution_location.pdf')
+            plt.savefig('alpha_data_split_distribution_location.pdf')
             plt.show()
 
 
@@ -393,7 +370,7 @@ if __name__ == "__main__":
     print(splitter.class_counts_after_limit, end="\n\n")
 
     if True:
-        splitter.plot_split_distribution_stacked_bar_chart(show_plots=True)
+        #splitter.plot_split_distribution_stacked_bar_chart(show_plots=True)
         splitter.plot_split_distribution(show_plots=True)
 
     #splitter.export_splits_to_excel("./")
