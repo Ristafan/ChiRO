@@ -389,12 +389,23 @@ def main(training_params: TrainingParams = None):
     val_dataset = preprocessor.create_bat_file_dataset(validation_files_and_labels_path)
     val_loader = DataLoader(val_dataset, batch_size=training_params.batch_size, shuffle=False, collate_fn=collate_fn, num_workers=1, pin_memory=True)
 
-    model = BetaV3(num_genera=training_params.num_classes,
+    beta_model = BetaV3(num_genera=training_params.num_classes,
                              dropout_rate=training_params.dropout_rate,
                              batch_norm=training_params.batch_norm,
                              global_pooling=training_params.global_pooling)
+    alpha_state_dict = torch.load('./AlphaV2SectionDynamicPretrained.pth')
 
-    model = train_section_dynamic_alpha(model, train_loader, val_loader, training_params, log_folder)
+    beta_model_state_dict = beta_model.state_dict()
+    filtered_state_dict = {
+        k: v for k, v in alpha_state_dict.items()
+        if k in beta_model_state_dict and beta_model_state_dict[k].shape == v.shape
+    }
+    beta_model.load_state_dict(filtered_state_dict, strict=False)
+    for name, param in beta_model.named_parameters():
+        if "fc2" not in name:
+            param.requires_grad = False
+
+    model = train_section_dynamic_alpha(beta_model, train_loader, val_loader, training_params, log_folder)
 
     # Ensure the directory exists
     os.makedirs(model_path, exist_ok=True)

@@ -16,7 +16,7 @@ if __name__ == "__main__":
     dropout_rate = [0.0]
     batch_norm = [True]
 
-    learning_rate = [0.001, 0.0001]
+    learning_rate = [0.0001, 0.00001]
     optimizer = ["Adam"]
 
     early_stopping = [True]
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         if idx == 0:
             training_params.splits_already_computed = True
             training_params.spectrograms_already_computed = True
-
+        main(training_params)
         try:
             main(training_params)
         except Exception as e:
