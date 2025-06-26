@@ -54,7 +54,7 @@ if __name__ == "__main__":
     training_params = tp.TrainingParams()
 
     # Set fixed parameters
-    training_params.model = "BetaSectionDynamic"
+    training_params.model = "BetaSectionDynamic-PretrainedAlpha"
     training_params.dataset_name = "GenusBatCalls"
     training_params.ignored_labels = ["Env_sounds"]
     training_params.merge_labels = [eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally]
