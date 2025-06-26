@@ -127,17 +127,17 @@ def plot_merged_metrics(df):
 
     # Define label mappings
     model_architecture_labels = {
-        "AlphaV2": "Standard 2D",
+        "AlphaV2": "Standard",
         "AlphaSelfAttention": "Self-Attention",
         "AlphaAttention": "Attention",
         "AlphaSelfAttentionPositional": "Self-Attention",
         "AlphaV2_1D": "Standard 1D",
-        "AlphaSectionDynamic": "Section Dynamic",
+        "AlphaSectionDynamic": "Standard",
         "AlphaStandard": "Standard"
     }
 
     model_labels = {
-        "AlphaV2": "Standard 2D",
+        "AlphaV2": "Standard",
         "AlphaSelfAttention": "Self-Attention",
         "AlphaAttention": "Attention",
         "AlphaSelfAttentionPositional": "Self-Attention",
@@ -155,11 +155,13 @@ def plot_merged_metrics(df):
         data=df_corrected,
         x="train_accuracy",
         y="val_accuracy",
-        hue="model_architecture_mapped",
-        style="model_mapped",
-        s=100
+        style="model_architecture_mapped",
+        hue="model_mapped",
+        s=100,
+        color=[0, 1, 2, 3]
     )
-    plt.title("Train vs Validation Accuracy")
+    font = {'size': 30}
+    plt.rc('font', **font)
     plt.xlabel("Train Accuracy")
     plt.ylabel("Validation Accuracy")
     plt.grid(True)
@@ -246,10 +248,11 @@ def plot_accuracy_over_epochs(df_epochs):
         alpha=0.7,
         legend=False  # Disable the automatic legend
     )
-    sns.lineplot(data=df_corrected, x="epoch", y="train_accuracy", hue="model_mapped", style="run", alpha=0.7)
-    plt.title("Train Accuracy over Epochs per Model")
+    font = {'size': 30}
+    plt.rc('font', **font)
+    sns.lineplot(data=df_corrected, x="epoch", y="train_accuracy", hue="model_mapped", style="run", alpha=0.7, color=[0, 1, 2, 3])
     plt.xlabel("Epoch")
-    plt.ylabel("Train Accuracy (%)")
+    plt.ylabel("Train Accuracy")
     plt.xlim(1, df_corrected["epoch"].max() + 1)
     handles, labels = ax.get_legend_handles_labels()
 
@@ -268,7 +271,7 @@ def plot_accuracy_over_epochs(df_epochs):
             pass
 
     # Manually create the legend with only the 'hue' handles and labels
-    plt.legend(hue_handles, hue_labels, title="Method", loc='center right')
+    plt.legend(hue_handles, hue_labels, title="Training Method", loc='center right')
     plt.savefig('TrainAccuracyOverEpochs.pdf', bbox_inches='tight', dpi=600)
     plt.show()
 
@@ -283,10 +286,11 @@ def plot_accuracy_over_epochs(df_epochs):
         alpha=0.7,
         legend=False  # Disable the automatic legend
     )
-    sns.lineplot(data=df_corrected, x="epoch", y="val_accuracy", hue="model_mapped", style="run", alpha=0.7)
-    plt.title("Validation Accuracy over Epochs per Model")
+    font = {'size': 30}
+    plt.rc('font', **font)
+    sns.lineplot(data=df_corrected, x="epoch", y="val_accuracy", hue="model_mapped", style="run", alpha=0.7, color=[0, 1, 2, 3])
     plt.xlabel("Epoch")
-    plt.ylabel("Validation Accuracy (%)")
+    plt.ylabel("Validation Accuracy")
     plt.xlim(1, df_corrected["epoch"].max() + 1)
     handles, labels = ax.get_legend_handles_labels()
 
@@ -305,7 +309,7 @@ def plot_accuracy_over_epochs(df_epochs):
             pass
 
     # Manually create the legend with only the 'hue' handles and labels
-    plt.legend(hue_handles, hue_labels, title="Method", loc='center right')
+    plt.legend(hue_handles, hue_labels, title="Training Method", loc='center right')
     plt.savefig('ValidationAccuracyOverEpochs.pdf', bbox_inches='tight', dpi=600)
     plt.show()
 
