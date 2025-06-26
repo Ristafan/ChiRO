@@ -16,13 +16,13 @@ if __name__ == "__main__":
     dropout_rate = [0.0]
     batch_norm = [True]
 
-    learning_rate = [0.0001, 0.00001]
+    learning_rate = [0.001, 0.0001]
     optimizer = ["Adam"]
 
     early_stopping = [True]
-    patience = [2, 3, 4, 5, 6]
-    batch_size = [2, 4, 6, 8, 10, 12]
-    epochs = [2, 4, 6, 8, 10, 16]
+    patience = [2]
+    batch_size = [2]
+    epochs = [2]
     global_pooling = ["avg", "max"]
 
     dataset_seed = [42]
@@ -30,9 +30,9 @@ if __name__ == "__main__":
 
     # Conditional
     window_size_overlap_size = [[0.23, 0.12], [0.27, 0.13], [0.2, 0.1], [1.0, 0.3]]
-    loss_filter_threshold = [0.7, 0.75, 0.8, 0.9]
+    loss_filter_threshold = [0.75]
 
-    num_heads = [1]
+    num_heads = [1, 2]
 
     # Create and shuffle all combinations
     hyperparameter_combinations = list(itertools.product(
@@ -54,10 +54,10 @@ if __name__ == "__main__":
     training_params = tp.TrainingParams()
 
     # Set fixed parameters
-    training_params.model = "BetaSectionDynamic-PretrainedAlpha"
-    training_params.dataset_name = "GenusBatCalls"
+    training_params.model = "BetaSectionDynamic"
+    training_params.dataset_name = "SpeciesBatCalls"
     training_params.ignored_labels = ["Env_sounds"]
-    training_params.merge_labels = [eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally]
+    training_params.merge_labels = []
     training_params.num_classes = 6
 
     training_params.model_architecture = "BetaV3"
@@ -93,6 +93,9 @@ if __name__ == "__main__":
         if idx == 0:
             training_params.splits_already_computed = True
             training_params.spectrograms_already_computed = True
+
+        main(training_params)
+
         try:
             main(training_params)
         except Exception as e:
