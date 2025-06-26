@@ -91,8 +91,8 @@ if __name__ == "__main__":
 
         # Create files in first run
         if idx == 0:
-            training_params.splits_already_computed = False
-            training_params.spectrograms_already_computed = False
+            training_params.splits_already_computed = True
+            training_params.spectrograms_already_computed = True
 
         try:
             main(training_params)
