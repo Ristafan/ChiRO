@@ -3,7 +3,7 @@ import json
 import random
 import torch
 import TrainingParams as tp
-from TrainA_SectionDynamic import main as train_alpha_section_dynamic
+from Train_ASectionDynamic import main as train_alpha_section_dynamic
 from src.Training.Train_A import main
 
 if __name__ == "__main__":

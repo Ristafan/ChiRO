@@ -3,7 +3,7 @@ import json
 import random
 import torch
 import TrainingParams as tp
-from TrainA_SectionDynamic import main as train_alpha_section_dynamic
+from Train_ASectionDynamic import main as train_alpha_section_dynamic
 from src.Training.Train_A import main
 
 if __name__ == "__main__":
@@ -19,8 +19,8 @@ if __name__ == "__main__":
 
     early_stopping = [True, False]
     patience = [2, 3, 4, 5, 6]
-    batch_size = [2, 4, 6, 8, 10, 12]
-    epochs = [2, 4, 6, 8, 10, 16]
+    batch_size = [2, 3, 4]
+    epochs = [2, 4, 6, 8]
     global_pooling = ["avg", "max"]
 
     dataset_seed = [42]

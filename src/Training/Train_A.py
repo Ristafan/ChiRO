@@ -119,6 +119,10 @@ def train_model(model, train_loader, val_loader, config, log_folder):
                     print(f"Early stopping at epoch {epoch + 1}")
                     break
 
+        if train_acc < 55.0:
+            print(f"Training accuracy {train_acc:.2f}% is below threshold, stopping training.")
+            break
+
     print("Training complete!")
     return model
 

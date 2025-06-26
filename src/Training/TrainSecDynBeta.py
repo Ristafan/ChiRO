@@ -3,10 +3,10 @@ import json
 import random
 import torch
 import TrainingParams as tp
-from TrainA_SectionDynamic import main as train_alpha_section_dynamic
+from Train_ASectionDynamic import main as train_alpha_section_dynamic
 from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, \
     Chiroptera_generally
-from src.Training.TrainB_SectionDynamic import main
+from src.Training.Train_BSectionDynamic import main
 
 if __name__ == "__main__":
     print("Starting hyperparameter tuning...", flush=True)
