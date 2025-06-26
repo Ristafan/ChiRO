@@ -370,6 +370,7 @@ def main(training_params: TrainingParams = None):
     spectrograms_path = config['spectrogram']['spectrograms_dir']
     model_path = config['model']['beta']
     runs_dir_alpha = config['logs']['runs_dir_beta']
+    pretrained_model_path = config['model']['pretrained_alphaV3']
 
     # Initialize logging
     log_folder = create_experiment_dir(training_params, runs_dir_alpha)
@@ -393,7 +394,7 @@ def main(training_params: TrainingParams = None):
                              dropout_rate=training_params.dropout_rate,
                              batch_norm=training_params.batch_norm,
                              global_pooling=training_params.global_pooling)
-    alpha_state_dict = torch.load('./AlphaV2SectionDynamicPretrained.pth')
+    alpha_state_dict = torch.load(pretrained_model_path)
 
     beta_model_state_dict = beta_model.state_dict()
     filtered_state_dict = {

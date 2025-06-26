@@ -8,6 +8,9 @@ train_files_and_labels_path_gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/da
 validation_files_and_labels_path_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Alpha/val_dataset_info.xlsx"
 validation_files_and_labels_path_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Beta/val_dataset_info.xlsx"
 validation_files_and_labels_path_gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Gamma/val_dataset_info.xlsx"
+test_files_and_labels_path_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Alpha/test_dataset_info.xlsx"
+test_files_and_labels_path_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Beta/test_dataset_info.xlsx"
+test_files_and_labels_path_gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/Gamma/test_dataset_info.xlsx"
 
 [logs]
 runs_dir_alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/data/runs/alpha"
@@ -22,4 +25,5 @@ alpha = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Alpha"
 alpha_beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/AlphaBeta"
 beta = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Beta"
 gamma = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/models/Gamma"
+pretrained_alphaV3 = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Training/AlphaV2SectionDynamicPretrained.pth"
 detection_model_path = "C:/Users/MartinFaehnrich/Documents/ChiRO/src/Batdetect2/Net2DFast_UK_same.pth.tar"
