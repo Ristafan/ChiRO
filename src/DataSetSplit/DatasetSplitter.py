@@ -281,33 +281,34 @@ class DatasetSplitter:
             plt.bar(sets, heights, bottom=bottoms, label=label)
             bottoms = [sum(x) for x in zip(bottoms, heights)]
 
-        plt.title('Data Split Distribution by Bat Species')
-        plt.ylabel('Number of files')
-        plt.xlabel('Dataset Split')
-        plt.legend(title='Genus', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.ylabel('Number of files', fontsize=18)
+        plt.xlabel('Dataset Split', fontsize=18)
+        plt.rcParams['legend.title_fontsize'] = 'xx-large'
+        plt.xticks(fontsize=18)
+        plt.legend(title='Genus', loc='center right', prop={'size': 18})
         plt.tight_layout()
-        plt.savefig('beta_data_split_distribution_verification1_stacked.png')
+        plt.savefig('beta_data_split_distribution_verification1_stacked.pdf')
         plt.show()
 
         # Plot 2: Location stacked bar chart (only if balancing by location)
-        if self.balance_by_location:
-            plt.figure(figsize=(10, 6))
-            counts_list_loc = [get_counts(df, self.col_location) for df in dfs]
-            all_locations = sorted(set().union(*[c.index for c in counts_list_loc]))
-
-            bottoms = [0]*len(sets)
-            for location in all_locations:
-                heights = [counts.get(location, 0) for counts in counts_list_loc]
-                plt.bar(sets, heights, bottom=bottoms, label=location)
-                bottoms = [sum(x) for x in zip(bottoms, heights)]
-
-            plt.title('Data Split Distribution by Location')
-            plt.ylabel('Number of files')
-            plt.xlabel('Dataset Split')
-            plt.legend(title='Location', bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.tight_layout()
-            plt.savefig('beta_data_split_distribution_location_stacked.png')
-            plt.show()
+        #if self.balance_by_location:
+        #    plt.figure(figsize=(10, 6))
+        #    counts_list_loc = [get_counts(df, self.col_location) for df in dfs]
+        #    all_locations = sorted(set().union(*[c.index for c in counts_list_loc]))
+#
+        #    bottoms = [0]*len(sets)
+        #    for location in all_locations:
+        #        heights = [counts.get(location, 0) for counts in counts_list_loc]
+        #        plt.bar(sets, heights, bottom=bottoms, label=location)
+        #        bottoms = [sum(x) for x in zip(bottoms, heights)]
+#
+        #    plt.title('Data Split Distribution by Location')
+        #    plt.ylabel('Number of files')
+        #    plt.xlabel('Dataset Split')
+        #    plt.legend(title='Location', bbox_to_anchor=(1.05, 1), loc='upper left')
+        #    plt.tight_layout()
+        #    plt.savefig('beta_data_split_distribution_location_stacked.png')
+        #    plt.show()
 
     def plot_split_distribution(self, show_plots: bool = True):
         if not show_plots:
@@ -339,28 +340,31 @@ class DatasetSplitter:
         combined = prepare_plot_data()
 
         # Plot 1: Verification 1 class distribution across sets
-        plt.figure(figsize=(12, 6))
-        all_counts_label = pd.concat([c[0] for c in combined], ignore_index=True)
-        sns.barplot(data=all_counts_label, x='Set', y='Count', hue='label', dodge=True)
-        plt.title('Data Split Distribution by Bat Species')
-        plt.ylabel('Number of files')
-        plt.xlabel('Dataset Split')
-        plt.legend(title='Genus', bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.tight_layout()
-        plt.savefig('beta_data_split_distribution_verification1.png')
-        plt.show()
+        #plt.figure(figsize=(12, 6))
+        #all_counts_label = pd.concat([c[0] for c in combined], ignore_index=True)
+        #sns.barplot(data=all_counts_label, x='Set', y='Count', hue='label', dodge=True)
+        #plt.title('Data Split Distribution by Bat Species')
+        #plt.ylabel('Number of files')
+        #plt.xlabel('Dataset Split')
+        #plt.legend(title='Genus', bbox_to_anchor=(1.05, 1), loc='upper left')
+        #plt.tight_layout()
+        #plt.savefig('beta_data_split_distribution_verification1.png')
+        #plt.show()
 
         # Plot 2: Location distribution across sets (only if balancing by location is enabled)
         if self.balance_by_location:
-            plt.figure(figsize=(12, 6))
+            plt.figure(figsize=(10, 10))
             all_counts_location = pd.concat([c[1] for c in combined], ignore_index=True)
             sns.barplot(data=all_counts_location, x='Set', y='Count', hue='location', dodge=True)
-            plt.title('Data Split Distribution by Location')
             plt.ylabel('Number of files')
             plt.xlabel('Dataset Split')
-            plt.legend(title='Location', bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.ylabel('Number of files', fontsize=18)
+            plt.xlabel('Dataset Split', fontsize=18)
+            plt.rcParams['legend.title_fontsize'] = 'xx-large'
+            plt.xticks(fontsize=18)
+            plt.legend(title='Location', loc='center right', prop={'size': 18})
             plt.tight_layout()
-            plt.savefig('beta_data_split_distribution_location.png')
+            plt.savefig('beta_data_split_distribution_location.pdf')
             plt.show()
 
 
@@ -379,8 +383,8 @@ if __name__ == "__main__":
     )
 
     splitter.load_data()
-    splitter.exclude_labels(["Env_sounds"])
-    splitter.merge_labels([eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, Chiroptera_generally])
+    #splitter.exclude_labels(["Env_sounds"])
+    splitter.merge_labels([bat_species_fixed])
     print("Class distribution after merging:")
     print(splitter.df['Class'].value_counts(), end="\n\n")
 
@@ -388,11 +392,11 @@ if __name__ == "__main__":
     print("Class counts after sampling:")
     print(splitter.class_counts_after_limit, end="\n\n")
 
-    if False:
+    if True:
         splitter.plot_split_distribution_stacked_bar_chart(show_plots=True)
         splitter.plot_split_distribution(show_plots=True)
 
-    splitter.export_splits_to_excel("./")
+    #splitter.export_splits_to_excel("./")
 
     print(f"Train samples: {len(splitter.train_df)}")
     print(f"Validation samples: {len(splitter.val_df)}")
