@@ -24,7 +24,8 @@ if __name__ == "__main__":
     global_pooling = ["avg", "max"]
 
     dataset_seed = [42]
-    training_architectures = ["AlphaV2_1D", "AlphaV2_1D_1", "AlphaV2"]
+
+    training_architectures = ["AlphaV2_1D", "AlphaV2"]
 
     # Conditional
     window_size_overlap_size = [[0.23, 0.12], [0.27, 0.13], [0.2, 0.1], [1.0, 0.3]]
@@ -49,48 +50,46 @@ if __name__ == "__main__":
     ))
     random.shuffle(hyperparameter_combinations)
 
-    for architecture in training_architectures:
-        training_params = tp.TrainingParams()
+    training_params = tp.TrainingParams()
 
-        # Set fixed parameters
-        training_params.model = "AlphaStandard"
-        training_params.dataset_name = "BatCalls-Environment"
+    # Set fixed parameters
+    training_params.model = "AlphaStandard"
+    training_params.dataset_name = "BatCalls-Environment"
 
-        training_params.model_architecture = architecture
-        training_params.model_summary = str(architecture)
+    # Loop through each configuration
+    for idx, (op, bs, ep, lr, dr, lft, ws_os, heads, bn, es, pt, gp) in enumerate(hyperparameter_combinations):
+        print(f"Running configuration {idx + 1}/{len(hyperparameter_combinations)}: "
+              f"Batch Size={bs}, Epochs={ep}, Learning Rate={lr}, "
+              f"Dropout Rate={dr}, Loss Filter Threshold={lft}, "
+              f"Window Size={ws_os[0]}, Overlap Size={ws_os[1]}, "
+              f"Num Heads={heads}, Batch Norm={bn}, Early Stopping={es}, Patience={pt}, Optimizer={op}, global_pooling={gp}")
 
-        # Loop through each configuration
-        for idx, (op, bs, ep, lr, dr, lft, ws_os, heads, bn, es, pt, gp) in enumerate(hyperparameter_combinations):
-            print(f"Running configuration {idx + 1}/{len(hyperparameter_combinations)}: "
-                  f"Batch Size={bs}, Epochs={ep}, Learning Rate={lr}, "
-                  f"Dropout Rate={dr}, Loss Filter Threshold={lft}, "
-                  f"Window Size={ws_os[0]}, Overlap Size={ws_os[1]}, "
-                  f"Num Heads={heads}, Batch Norm={bn}, Early Stopping={es}, Patience={pt}, Optimizer={op}, global_pooling={gp}")
+        # Update training parameters
+        training_params.batch_size = bs
+        training_params.num_epochs = ep
+        training_params.learning_rate = lr
+        training_params.dropout_rate = dr
+        training_params.loss_filter_threshold_percentage = lft
+        training_params.window_size = ws_os[0]
+        training_params.overlap_size = ws_os[1]
+        training_params.batch_norm = bn
+        training_params.early_stopping = es
+        training_params.patience = pt
+        training_params.optimizer = op
+        training_params.attention_heads = heads
+        training_params.global_pooling = gp
+        training_params.model_name = f"{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
 
-            # Update training parameters
-            training_params.batch_size = bs
-            training_params.num_epochs = ep
-            training_params.learning_rate = lr
-            training_params.dropout_rate = dr
-            training_params.loss_filter_threshold_percentage = lft
-            training_params.window_size = ws_os[0]
-            training_params.overlap_size = ws_os[1]
-            training_params.batch_norm = bn
-            training_params.early_stopping = es
-            training_params.patience = pt
-            training_params.optimizer = op
-            training_params.attention_heads = heads
-            training_params.global_pooling = gp
-            training_params.model_name = f"{training_params.model}_{op}_{bs}_{ep}_{lr}_{dr}_{lft}_{ws_os[0]}_{ws_os[1]}_{heads}_{bn}_{es}_{pt}"
+        training_params.splits_already_computed = True
+        training_params.spectrograms_already_computed = True
 
+        # Create files in first run
+        if idx == 0:
             training_params.splits_already_computed = True
             training_params.spectrograms_already_computed = True
 
-            # Create files in first run
-            if idx == 0:
-                training_params.splits_already_computed = True
-                training_params.spectrograms_already_computed = True
-
+        for architecture in training_architectures:
+            training_params.model_architecture = architecture
             try:
                 main(training_params)
             except Exception as e:
