@@ -39,12 +39,11 @@ plt.figure(figsize=(12, 10))
 
 plt.subplot(4, 1, 1)
 plt.plot(time_ms, signal, color='gray')
-plt.axvline(start_time_ms, color='red', linestyle='--', label='Segment Start')
-plt.axvline(start_time_ms + duration_ms, color='red', linestyle='--', label='Segment End')
+plt.axvline(start_time_ms, color='red', linestyle='--')
+plt.axvline(start_time_ms + duration_ms, color='red', linestyle='--')
 plt.title('Full Waveform')
 plt.xlabel('Time (ms)')
 plt.ylabel('Amplitude')
-plt.legend()
 
 # === Plot 2: Zoomed segment ===
 plt.subplot(4, 1, 2)
@@ -56,10 +55,11 @@ plt.ylabel('Amplitude')
 # === Plot 3: FFT of segment ===
 window = get_window('hann', WIN_LENGTH)
 f, t, Zxx = stft(segment, fs=fs, nperseg=WIN_LENGTH, noverlap=WIN_LENGTH - HOP_LENGTH, window=window, nfft=N_FFT)
-power = 2 * np.abs(Zxx)**2
+power = 10 * np.log10(2 * np.abs(Zxx)**2 + 1e-12)  # subplot 3
 
 plt.subplot(4, 1, 3)
-plt.pcolormesh(t * 1000, f, power, shading='gouraud')
+quad = plt.pcolormesh(t * 1000, f, power, shading='gouraud')
+quad.set_rasterized(True)
 plt.title('FFT of Segment (Hann window)')
 plt.xlabel('Time (ms)')
 plt.ylabel('Frequency (Hz)')
@@ -68,16 +68,17 @@ plt.ylim(0, fs / 2)
 
 # === Plot 4: Full spectrogram with only segment filled ===
 f_full, t_full, Zxx_full = stft(signal, fs=fs, nperseg=WIN_LENGTH, noverlap=WIN_LENGTH - HOP_LENGTH, window=window, nfft=N_FFT)
-power_full = 2 * np.abs(Zxx_full)**2
+power_full = 10 * np.log10(2 * np.abs(Zxx_full)**2 + 1e-12)  # subplot 4
 t_ms_full = t_full * 1000
 
 # Masking out the full spectrogram except the segment
-mask = (t_ms_full >= start_time_ms) & (t_ms_full <= start_time_ms + duration_ms)
-masked_power = np.zeros_like(power_full)
-masked_power[:, mask] = power_full[:, mask]
+#mask = (t_ms_full >= start_time_ms) & (t_ms_full <= start_time_ms + duration_ms)
+#masked_power = np.zeros_like(power_full)
+#masked_power[:, mask] = power_full[:, mask]
 
 plt.subplot(4, 1, 4)
-plt.pcolormesh(t_ms_full, f_full, masked_power, shading='gouraud')
+quad = plt.pcolormesh(t_ms_full, f_full, power_full, shading='gouraud')
+quad.set_rasterized(True)
 plt.title('Spectrogram Highlighting Segment Only')
 plt.xlabel('Time (ms)')
 plt.ylabel('Frequency (Hz)')
@@ -87,4 +88,6 @@ plt.axvline(start_time_ms + duration_ms, color='red', linestyle='--', label='Seg
 plt.ylim(0, fs / 2)
 
 plt.tight_layout()
-plt.show()
+#plt.draw()
+plt.savefig("STFT_Comparison.pdf", dpi=400)
+#plt.show()
