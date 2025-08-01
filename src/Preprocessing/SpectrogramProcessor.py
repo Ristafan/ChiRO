@@ -17,37 +17,19 @@ from tqdm import tqdm
 
 class SpectrogramProcessor:
     def __init__(self, waveform, sample_rate=192000):
-        """
-        Initialize with a waveform tensor.
-        :param waveform: Tensor of shape (channels, time)
-        :param sample_rate: Sample rate of the waveform (default: 96kHz)
-        """
         self.waveform = waveform
         self.sample_rate = sample_rate
         self.spectrogram = None
 
     def apply_highpass_filter(self, cutoff_freq=16000):
-        """
-        Applies a high-pass filter to remove frequencies below 16 kHz.
-        Useful for isolating bat echolocation calls.
-        """
         self.waveform = F.highpass_biquad(self.waveform, sample_rate=self.sample_rate, cutoff_freq=cutoff_freq)
 
     def compute_spectrogram(self, n_fft=4096, hop_length=None, win_length=2048):
-        """
-        Computes a high-resolution spectrogram optimized for bat echolocation calls.
-        Reduced default n_fft and win_length.
-        """
         transform = T.Spectrogram(n_fft=n_fft, win_length=win_length, hop_length=hop_length, power=2.0).to(self.waveform.device)
         self.spectrogram = transform(self.waveform)
         return self.spectrogram
 
     def compute_mel_spectrogram(self, n_mels=256, n_fft=1024, hop_length=256, win_length=1024):
-        """
-        Computes a Mel spectrogram optimized for high-frequency bat calls.
-        Uses a high number of Mel bins to capture fine details.
-        Reduced default n_mels, n_fft, and win_length.
-        """
         transform = T.MelSpectrogram(
             sample_rate=self.sample_rate,
             n_fft=n_fft,
@@ -68,10 +50,6 @@ class SpectrogramProcessor:
         self.spectrogram = transform(self.spectrogram.unsqueeze(0)).squeeze(0)
 
     def denoise_spectrogram_mean_subtraction(self):
-        """
-        Removes noise by subtracting the mean amplitude from each frequency bin.
-        Assumes spectrogram is already computed and is on the CPU.
-        """
         if self.spectrogram is None:
             raise ValueError("Spectrogram has not been computed yet.")
 
@@ -81,22 +59,6 @@ class SpectrogramProcessor:
         return self.spectrogram
 
     def denoise_spectrogram_median_filter(self, kernel_size=(3, 3)):
-        """
-        Applies a 2D median filter to the spectrogram. This is an image processing
-        technique effective at removing impulsive noise ('salt-and-pepper' like noise)
-        and smoothing out isolated bright or dark speckles on the spectrogram,
-        while generally preserving edges (like the distinct contours of bat calls).
-        Correctly handles both 2D and 3D (batch) spectrograms by iterating over the batch dimension.
-
-        Note: This method is significantly more efficient with NumPy arrays due to
-        `scipy.ndimage.median_filter`. If your spectrogram is a PyTorch tensor,
-        it will be temporarily converted to NumPy for processing and then converted back.
-
-        Args:
-            kernel_size (tuple): A 2-element tuple (height, width) specifying the
-                                 dimensions of the median filter window.
-                                 It's highly recommended that kernel dimensions are odd (e.g., (3,3), (5,5)).
-        """
         if self.spectrogram is None:
             raise ValueError("Spectrogram has not been computed yet.")
         if len(kernel_size) != 2:
@@ -142,14 +104,12 @@ class SpectrogramProcessor:
         return self.spectrogram
 
     def save_spectrogram(self, name, save_path="C:/Users/MartinFaehnrich/Documents/ChiRO/data/Spectrograms/"):
-        """Saves the computed spectrogram as a .pt file."""
         if self.spectrogram is None:
             raise ValueError("Spectrogram has not been computed yet.")
         torch.save(self.spectrogram, f"{save_path}spectrogram_{name[:-4]}.pt")
 
     @staticmethod
     def load_spectrogram(filepath):
-        """Loads a spectrogram from a .pt file."""
         return torch.load(filepath)
 
     def plot_spectrogram(self, log_scale=True):
