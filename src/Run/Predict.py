@@ -1,4 +1,3 @@
-from src.Logging.Logger import Logger
 from src.Preprocessing.AudioLoader import AudioLoader
 from src.Preprocessing.SpectrogramProcessor import SpectrogramProcessor
 from src.Architectures.AlphaV1 import AlphaV1
@@ -18,9 +17,7 @@ class Predictor():
         try:
             self.model.load_state_dict(torch.load(self.model_path, map_location=self.device))
             self.model.to(self.device)
-            Logger().log_debug("Model loaded successfully.")
         except FileNotFoundError:
-            Logger().log_debug("Model file not found.")
             raise ValueError("Model file not found")
 
     def predict_audio_file(self, filename):
