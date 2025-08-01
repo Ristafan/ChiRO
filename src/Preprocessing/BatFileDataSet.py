@@ -8,12 +8,6 @@ from src.Training.TrainingParams import DEVICE
 
 class BatFileDataSet(Dataset):
     def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", label_column="Label"):
-        """
-        :param spectrogram_dir: Path to folder containing spectrogram .pt files
-        :param labels_path: Path to Excel file containing labels
-        :param filename_column: Column name in Excel file for filenames
-        :param label_column: Column name in Excel file for labels
-        """
         self.spectrogram_dir = spectrogram_dir
         self.labels_path = labels_path
         self.filename_column = filename_column

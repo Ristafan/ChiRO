@@ -23,12 +23,6 @@ def plot_spectrogram(spectrogram):
 
 class BatCallDataSet(Dataset):
     def __init__(self, spectrogram_dir, labels_path, filename_column="Filename", label_column="Label"):
-        """
-        :param spectrogram_dir: Path to folder containing spectrogram .pt files
-        :param labels_path: Path to Excel file containing labels
-        :param filename_column: Column name in Excel file for filenames
-        :param label_column: Column name in Excel file for labels
-        """
         self.spectrogram_dir = spectrogram_dir
         self.labels_path = labels_path
         self.filename_column = filename_column
@@ -129,14 +123,7 @@ class BatCallDataSet(Dataset):
                     idx += 1
 
 
-def plot_dataset_item(dataset: BatCallDataSet, idx: int):
-    """
-    Plot the full spectrogram for item idx with the call region highlighted,
-    and then plot just the extracted slice.
-
-    :param dataset: your BatCallDataSet instance
-    :param idx: index into dataset
-    """
+def plot_dataset_item(dataset: BatCallDataSet, idx):
     # 1. Figure out which file & call this is
     key = dataset.filenames_with_calls[idx]          # e.g. "20210712_233400-0"
     base_fname = key.split("-")[0]                   # e.g. "20210712_233400"
