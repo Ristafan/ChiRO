@@ -8,13 +8,10 @@ from src.Training.TrainingParams import TrainingParams
 
 
 def load_path_config():
-    """
-    Load the configuration from the pyproject.toml file.
-    """
     # Load the pyproject.toml file
-    #with open("../config.toml", "r") as f:
+    with open("../config.toml", "r") as f:
     #with open("/home/user/faehnrich/ChiRO/src/config_rolf.toml", "r") as f:
-    with open("/cluster/raid/home/f60047174/ChiRO/src/config_gamarello.toml", "r") as f:
+    #with open("/cluster/raid/home/f60047174/ChiRO/src/config_gamarello.toml", "r") as f:
         pyproject = toml.load(f)
 
     return pyproject
@@ -35,9 +32,6 @@ def create_experiment_dir(config, base_dir):
 
 
 def update_experiment_configs(exp_path, config):
-    """
-    Update the experiment configuration file with the current training parameters.
-    """
     training_params_dict = config.__dict__
 
     # Save config
