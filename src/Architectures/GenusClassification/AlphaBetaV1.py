@@ -62,12 +62,9 @@ class AlphaBetaV1(nn.Module):
 
 if __name__ == '__main__':
     # Example usage:
-    # Assuming you have 10 genera (including the 'chiroptera' catch-all class)
     num_genera = 7
     model = AlphaBetaV1(num_genera=num_genera)
 
-    # Example input tensor (batch size of 1, 1 channel, some height, some width)
-    #  Replace the height and width with your actual spectrogram dimensions
     input_tensor = torch.randn(1, 1, 128, 256) # Example: 128 height, 256 width
 
     # Forward pass

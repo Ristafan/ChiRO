@@ -71,14 +71,6 @@ class ResNet50ForSpectrogram(nn.Module):
         super(ResNet50ForSpectrogram, self).__init__()
         self.in_channels = 64 # Initial number of channels after the first conv
         self.use_separable = use_separable # Option to use separable convolutions
-        # Note: The initial conv1 should usually remain a standard Conv2d
-        # for a 1-channel input to expand features into 64 channels effectively.
-        # It's less common to make the very first layer separable.
-        # If you truly want the first layer separable, you'd define it here.
-        # For typical ResNet adaptations, conv1 is standard.
-        # For simplicity and aligning with common practices, we'll keep conv1 standard.
-        # If you were to make it separable, you'd replace:
-        # self.conv1 = nn.Conv2d(1, 64, ...) with self.conv1 = SeparableConv2d(1, 64, ...)
 
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -167,7 +159,6 @@ if __name__ == '__main__':
     print(f"Number of parameters (Standard Conv): {num_params_standard}")
     output_standard = model_resnet_standard(example_input)
     print(f"Output shape (Standard Conv): {output_standard.shape}\n")
-
 
     print("--- ResNet50 (with Separable Convolutions) ---")
     model_resnet_separable = ResNet50ForSpectrogram(num_classes=num_genera, use_separable=True)

@@ -10,16 +10,9 @@ class LearnedPositionalEncoding(nn.Module):
         self.position_embeddings = nn.Embedding(max_len, d_model)
 
     def forward(self, x):
-        """
-        Args:
-            x: Tensor, shape (sequence_length, batch_size, embedding_dim)
-               or (batch_size, sequence_length, embedding_dim) if batch_first
-        """
-        # Get the sequence length from the input tensor
-        if x.dim() == 3: # (S, B, E) or (B, S, E)
+        if x.dim() == 3:
             seq_len = x.size(0) if not self.position_embeddings.embedding_dim == x.size(2) else x.size(1) # More robust check needed if shapes vary
-            # Assuming x is (S, B, E) -> seq_len is x.size(0)
-            # Assuming x is (B, S, E) -> seq_len is x.size(1)
+
 
             # Create a tensor of positions (0, 1, ..., seq_len-1)
             # For batch_first=False:
@@ -48,10 +41,6 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe) # Register as buffer so it's saved with the model but not trained
 
     def forward(self, x):
-        """
-        Args:
-            x: Tensor, shape (sequence_length, batch_size, embedding_dim)
-        """
         # Add positional encoding to the input embedding
         # Ensure pe's sequence dimension matches x's sequence dimension
         x = x + self.pe[:x.size(0), :]
@@ -112,8 +101,6 @@ class AlphaSelfAttentionPositionalNet(nn.Module):
         x = x.permute(2, 0, 1)       # [T', B, 128]
 
         # Apply positional encoding
-        # For LearnedPositionalEncoding, it generates positions internally based on x.size(0)
-        # For Sinusoidal, it's precomputed and sliced
         x = self.positional_encoder(x)
 
         x = self.transformer_encoder(x)

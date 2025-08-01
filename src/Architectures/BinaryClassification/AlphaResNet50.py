@@ -63,15 +63,12 @@ class AlphaResNet50(nn.Module):
         self.in_channels = 64 # Initial input channels after first conv
 
         # Initial convolutional layer (similar to ResNet's first layer)
-        # ResNet50 typically uses a larger kernel and stride here.
-        # Original AlphaV2 has 1 input channel (e.g., grayscale audio spectrogram)
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         # ResNet Stages
-        # The num_blocks list typically is [3, 4, 6, 3] for ResNet50
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)

@@ -16,7 +16,7 @@ class AlphaV3_1(nn.Module):
         self.conv3 = nn.Conv1d(64, 128, kernel_size=5, stride=1, padding=2)
         self.dropout = nn.Dropout(dropout_rate)
 
-        # Global average pooling - works with any input size
+        # Global average pooling
         if global_pooling == "avg":
             self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
         else:
