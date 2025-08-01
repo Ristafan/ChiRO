@@ -1,29 +1,22 @@
-import json
-
 from torch import nn
 from tqdm import tqdm
 import os
-import wandb
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 import torch
-from datetime import datetime
 
-from src.Architectures.A_SelfAttention import SelfAttentionNet
-from src.Architectures.A_SelfAttentionPositional import AlphaSelfAttentionPositionalNet
-from src.Architectures.AlphaResNet50 import AlphaResNet50, Bottleneck
-from src.Architectures.AlphaV1_Attention import AlphaV1_Attention
-from src.Architectures.AlphaV2_1 import AlphaV2_1
-from src.Architectures.AlphaV2_1D import AlphaV2_1D
-from src.Architectures.AlphaV2_1D_1 import AlphaV2_1D_1
-from src.Architectures.AlphaV3 import AlphaV3
-from src.Architectures.AlphaV3_1 import AlphaV3_1
-from src.DataSetSplit.TrainingClasses import bat_species
+from src.Architectures.BinaryClassification.A_SelfAttention import SelfAttentionNet
+from src.Architectures.BinaryClassification.A_SelfAttentionPositional import AlphaSelfAttentionPositionalNet
+from src.Architectures.BinaryClassification.AlphaResNet50 import AlphaResNet50, Bottleneck
+from src.Architectures.BinaryClassification.AlphaV1_Attention import AlphaV1_Attention
+from src.Architectures.BinaryClassification.AlphaV2_1 import AlphaV2_1
+from src.Architectures.BinaryClassification.AlphaV2_1D import AlphaV2_1D
+from src.Architectures.BinaryClassification.AlphaV2_1D_1 import AlphaV2_1D_1
+from src.Architectures.BinaryClassification.AlphaV3 import AlphaV3
+from src.Architectures.BinaryClassification.AlphaV3_1 import AlphaV3_1
 from src.Preprocessing.Preprocessor import Preprocessor
-from src.Architectures.AlphaV2 import AlphaV2
-from src.Training.TrainingParams import SPLITS_ALREADY_COMPUTED, SPECTROGRAMS_ALREADY_COMPUTED, USE_MIN_FILES_PER_CLASS, \
-    TOTAL_FILES_PER_CLASS, IGNORED_LABELS, MERGE_LABELS, SPLIT_METHOD, SEED, LEARNING_RATE, \
-    DATASET_NAME, NUM_EPOCHS, BATCH_SIZE, MODEL, MODEL_NAME, WANDB_API_KEY, TrainingParams
+from src.Architectures.BinaryClassification.AlphaV2 import AlphaV2
+from src.Training.TrainingParams import TrainingParams
 from src.utils import load_path_config, update_experiment_configs, create_experiment_dir, log_metrics
 
 # Set memory allocation configuration

@@ -7,12 +7,10 @@ import torch.nn.functional as F
 import torch
 from datetime import datetime
 
-from src.Architectures.BetaV1 import BetaV1
-from src.Architectures.BetaV3 import BetaV3
-from src.Architectures.BetaV2 import ResNet50ForSpectrogram
+from src.Architectures.GenusClassification.BetaV3 import BetaV3
 from src.Batdetect2.CallsDetector import CallsDetector
 from src.Batdetect2.Net2DFast import Net2DFast
-from src.DataSetSplit.TrainingClasses import bat_species, eptesicus_species, myotis_species, pipistrellus_species, \
+from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, pipistrellus_species, \
     Chiroptera_generally, nyctalus_species
 from src.Preprocessing.Preprocessor import Preprocessor
 from src.utils import load_path_config

@@ -1,22 +1,12 @@
-import json
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.cuda.amp import autocast, GradScaler # Import for Automatic Mixed Precision
 import numpy as np
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
 
-from src.Architectures.AlphaResNet50 import AlphaResNet50, Bottleneck
-from src.Architectures.AlphaV2 import AlphaV2
-from src.Architectures.AlphaV2_1 import AlphaV2_1
-from src.Architectures.AlphaV2_1D import AlphaV2_1D
-from src.Architectures.AlphaV2_1D_1 import AlphaV2_1D_1
-from src.Architectures.AlphaV3 import AlphaV3
-from src.Architectures.AlphaV3_1 import AlphaV3_1
-from src.Architectures.BetaV3 import BetaV3
+from src.Architectures.GenusClassification.BetaV3 import BetaV3
 from src.Preprocessing.Preprocessor import Preprocessor
 from src.Training.TrainingParams import TrainingParams
 from src.utils import load_path_config, update_experiment_configs, log_metrics, create_experiment_dir
@@ -26,10 +16,6 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 
 def get_frames_from_seconds(time_in_seconds: float, sample_rate: int, hop_length: int) -> int:
-    """
-    Converts a time duration in seconds to the approximate number of spectrogram frames.
-    This calculates how many 'hop_lengths' fit into the given time duration.
-    """
     if hop_length <= 0:
         raise ValueError("hop_length must be a positive integer.")
 
@@ -43,23 +29,7 @@ def cut_tensor_into_pieces(
         hop_length: int,
         window_size_s: float,
         overlap_size_s: float
-) -> list[torch.Tensor]:
-    """
-    Cuts a 3D tensor [channels, frequency_bins, time_frames] into overlapping pieces
-    based on time durations. Each piece is padded with zeros if it's shorter than the
-    specified window_size_s.
-
-    Args:
-        tensor (torch.Tensor): The input tensor. Expected shape: [channels, frequency_bins, time_frames].
-        sample_rate (int): The sample rate of the audio data.
-        hop_length (int): The hop length used to create the spectrogram.
-        window_size_s (float): The desired size of each cut piece in seconds.
-        overlap_size_s (float): The desired overlap size in seconds.
-
-    Returns:
-        list[torch.Tensor]: A list of torch.Tensors, where each is a cut piece
-                            of shape [channels, frequency_bins, window_frames].
-    """
+):
 
     if tensor.ndim != 3:
         raise ValueError("Input tensor must be a 3D tensor with shape [channels, frequency_bins, time_frames].")
@@ -97,11 +67,9 @@ def cut_tensor_into_pieces(
 
     while True: # Loop indefinitely, breaking out when no more valid starting points
         # Determine the actual end frame for the current slice.
-        # This will be `current_start_frame + window_frames` or `total_time_frames`, whichever is smaller.
         actual_end_frame_for_slice = min(current_start_frame + window_frames, total_time_frames)
 
         # If the start frame is beyond or equal to the total frames, we are done.
-        # This handles cases where the last hop takes us completely beyond the data.
         if current_start_frame >= total_time_frames:
             break
 
@@ -109,15 +77,12 @@ def cut_tensor_into_pieces(
         cut_piece = tensor[:, :, current_start_frame:actual_end_frame_for_slice]
 
         # Pad the cut_piece if its time dimension is shorter than the required window_frames.
-        # This ensures all output pieces have a consistent time dimension for the CNN.
         if cut_piece.shape[2] < window_frames:
             padding_needed = window_frames - cut_piece.shape[2]
-            # F.pad expects padding for the last dimension as (padding_left, padding_right).
             # Here, we pad `padding_needed` zeros to the right of the time dimension.
             cut_piece = F.pad(cut_piece, (0, padding_needed))
 
         # Add the padded piece to the list.
-        # A piece might be empty if `window_frames` is 0 or if `current_start_frame` is too large initially.
         if cut_piece.shape[2] > 0:
             cut_pieces.append(cut_piece)
 
@@ -125,8 +90,6 @@ def cut_tensor_into_pieces(
         current_start_frame += cutting_hop_frames
 
         # Additional break condition: If the next start frame would be beyond the end of the total frames
-        # AND we've already processed a piece that included the very end of the original tensor,
-        # then we can stop to avoid processing redundant or empty slices.
         if current_start_frame >= total_time_frames and actual_end_frame_for_slice == total_time_frames:
             break
 
@@ -153,9 +116,6 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, log_fol
     num_epochs = config.num_epochs
 
     # This dictionary will store which sections of each full spectrogram to train on
-    # Key: original_spectrogram_idx (from train_loader)
-    # Value: A set of tuples (original_section_idx_within_spectrogram)
-    # This set will contain indices of "good" sections from `all_possible_sections`.
     spectrogram_section_map = {}
 
     for epoch in range(num_epochs):
@@ -167,11 +127,9 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, log_fol
         patience_counter = 0
 
         # Lists to store losses for filtering at the end of the epoch
-        # (spectrogram_idx, section_original_index, loss_value)
         epoch_section_loss_records = []
 
         # Add progress bar for each epoch
-        # train_loader now yields full spectrograms. We'll cut them inside the loop.
         train_pbar = tqdm(enumerate(train_loader), total=len(train_loader), desc=f"Epoch {epoch+1}/{num_epochs} [Train]")
 
         for batch_idx_full_spec, (full_spectrograms_batch, full_labels_batch) in train_pbar:
@@ -179,10 +137,7 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, log_fol
             full_spectrograms_batch = full_spectrograms_batch.to(device)
             full_labels_batch = full_labels_batch.to(device)
 
-            # --- Dynamic Cutting and Batching of Sections ---
-
             # This list will hold the actual sections and their corresponding labels and original IDs
-            # (section_tensor, section_label_tensor, original_spectrogram_idx, section_idx_within_orig_spec)
             active_sections_for_batch = []
 
             for i in range(full_spectrograms_batch.shape[0]): # Iterate over each full spectrogram in the batch
@@ -212,7 +167,6 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, log_fol
                             section_data = all_possible_sections[section_idx]
                             active_sections_for_batch.append((section_data, full_label, original_spectrogram_idx, section_idx))
 
-            # --- Now process these active_sections_for_batch in mini-batches for the CNN ---
             # We will create internal mini-batches of sections
             if not active_sections_for_batch:
                 continue # Skip if no active sections for this full_spectrograms_batch
@@ -256,11 +210,9 @@ def train_section_dynamic_alpha(model, train_loader, val_loader, config, log_fol
                 train_pbar.set_postfix({'loss': loss.item(), 'acc': 100 * correct / total})
 
                 # Clear memory every few batches if needed
-                # This check now applies to the internal section mini-batches
                 if section_batch_start_idx % (train_loader.batch_size * 5) == 0: # Check less frequently
                     torch.cuda.empty_cache()
 
-        # --- End of Epoch: Calculate Average Loss and Filter Sections ---
 
         # Calculate total average loss over all *processed* sections in this epoch
         if epoch_section_loss_records:

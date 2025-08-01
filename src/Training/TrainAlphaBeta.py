@@ -12,7 +12,7 @@ from datetime import datetime
 from src.DataSetSplit.TrainingClasses import eptesicus_species, myotis_species, nyctalus_species, pipistrellus_species, \
     Chiroptera_generally
 from src.Preprocessing.Preprocessor import Preprocessor
-from src.Architectures.AlphaBetaV1 import AlphaBetaV1
+from src.Architectures.GenusClassification.AlphaBetaV1 import AlphaBetaV1
 from src.utils import load_path_config
 
 # Set memory allocation configuration
@@ -21,17 +21,6 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
                 noise_label=7):
-    """
-    Trains the AlphaBeta model.
-
-    Args:
-        model (nn.Module): The AlphaBeta model.
-        train_loader (DataLoader): DataLoader for the training data.
-        num_epochs (int): Number of training epochs.
-        learning_rate (float): Learning rate for the optimizer.
-        noise_label (int): The label ID for noise/environment sounds.
-        generic_bat_label (int): The label ID for generic bat calls.
-    """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
@@ -41,7 +30,6 @@ def train_model(model, train_loader, num_epochs=10, learning_rate=0.001,
 
     # Use the combined loss function
     def criterion(output_alpha, target_alpha, output_beta, target_beta):
-        """Wrapper for the combined_loss function"""
         return combined_loss(output_alpha, target_alpha, output_beta, target_beta,
                              noise_label=noise_label)
 

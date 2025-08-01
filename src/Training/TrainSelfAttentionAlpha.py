@@ -93,8 +93,3 @@ if __name__ == "__main__":
             main(training_params)
         except Exception as e:
             print(f"Training failed on config {idx+1}: {e}")
-
-
-# Syncing with WandB // run from wandb directory:
-# Get-ChildItem -Directory -Filter "offline-run-*" | ForEach-Object { wandb sync $_.Name }
-# Get-ChildItem -Directory -Filter "run-*" | ForEach-Object { wandb sync $_.Name }
